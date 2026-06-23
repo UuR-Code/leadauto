@@ -4,10 +4,15 @@ import Link from "next/link"
 export const dynamic = "force-dynamic"
 
 export default async function CampaignsPage() {
-  const campaigns = await prisma.campaign.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { _count: { select: { firms: true } } },
-  })
+  let campaigns: Awaited<ReturnType<typeof prisma.campaign.findMany>> = []
+  try {
+    campaigns = await prisma.campaign.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { _count: { select: { firms: true } } },
+    })
+  } catch (e) {
+    console.error("campaigns query error:", e)
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

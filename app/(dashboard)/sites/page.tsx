@@ -4,12 +4,17 @@ import Link from "next/link"
 export const dynamic = "force-dynamic"
 
 export default async function SitesPage() {
-  const sites = await prisma.firm.findMany({
-    where: { status: { in: ["DEPLOYED", "SENT", "REPLIED", "MEETING", "CLOSED"] } },
-    orderBy: { deployedAt: "desc" },
-    include: { landingPage: true, campaign: { select: { sector: true } } },
-    take: 100,
-  })
+  let sites: Awaited<ReturnType<typeof prisma.firm.findMany>> = []
+  try {
+    sites = await prisma.firm.findMany({
+      where: { status: { in: ["DEPLOYED", "SENT", "REPLIED", "MEETING", "CLOSED"] } },
+      orderBy: { deployedAt: "desc" },
+      include: { landingPage: true, campaign: { select: { sector: true } } },
+      take: 100,
+    })
+  } catch (e) {
+    console.error("sites query error:", e)
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

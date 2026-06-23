@@ -4,14 +4,19 @@ import Link from "next/link"
 export const dynamic = "force-dynamic"
 
 export default async function LeadsPage() {
-  const leads = await prisma.firm.findMany({
-    where: { status: { in: ["REPLIED", "MEETING", "CLOSED"] } },
-    orderBy: { repliedAt: "desc" },
-    include: {
-      campaign: { select: { name: true, sector: true } },
-      emails: { orderBy: { createdAt: "desc" }, take: 1 },
-    },
-  })
+  let leads: Awaited<ReturnType<typeof prisma.firm.findMany>> = []
+  try {
+    leads = await prisma.firm.findMany({
+      where: { status: { in: ["REPLIED", "MEETING", "CLOSED"] } },
+      orderBy: { repliedAt: "desc" },
+      include: {
+        campaign: { select: { name: true, sector: true } },
+        emails: { orderBy: { createdAt: "desc" }, take: 1 },
+      },
+    })
+  } catch (e) {
+    console.error("leads query error:", e)
+  }
 
   const stats = {
     replied: leads.filter((l) => l.status === "REPLIED").length,

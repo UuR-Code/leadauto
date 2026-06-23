@@ -25,16 +25,22 @@ export default async function FirmsPage({
 
   const where = status ? { status: status as never } : {}
 
-  const [firms, total] = await Promise.all([
-    prisma.firm.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (pageNum - 1) * pageSize,
-      take: pageSize,
-      include: { campaign: { select: { name: true, sector: true } } },
-    }),
-    prisma.firm.count({ where }),
-  ])
+  let firms: Awaited<ReturnType<typeof prisma.firm.findMany>> = []
+  let total = 0
+  try {
+    ;[firms, total] = await Promise.all([
+      prisma.firm.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (pageNum - 1) * pageSize,
+        take: pageSize,
+        include: { campaign: { select: { name: true, sector: true } } },
+      }),
+      prisma.firm.count({ where }),
+    ])
+  } catch (e) {
+    console.error("firms query error:", e)
+  }
 
   const totalPages = Math.ceil(total / pageSize)
 
