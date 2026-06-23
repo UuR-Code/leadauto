@@ -4,8 +4,22 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "${PORT:-3000}:3000"
+    expose:
+      - "3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.gzip.compress=true"
+      - "traefik.http.routers.http-0-ampqu4s7lz8yjbx64s9t35l5.entryPoints=http"
+      - "traefik.http.routers.http-0-ampqu4s7lz8yjbx64s9t35l5.middlewares=gzip"
+      - "traefik.http.routers.http-0-ampqu4s7lz8yjbx64s9t35l5.rule=Host(`ampqu4s7lz8yjbx64s9t35l5.46.62.218.106.sslip.io`) && PathPrefix(`/`)"
+      - "traefik.http.routers.http-0-ampqu4s7lz8yjbx64s9t35l5.service=http-0-ampqu4s7lz8yjbx64s9t35l5"
+      - "traefik.http.services.http-0-ampqu4s7lz8yjbx64s9t35l5.loadbalancer.server.port=3000"
+      - "caddy_0=http://ampqu4s7lz8yjbx64s9t35l5.46.62.218.106.sslip.io"
+      - "caddy_0.handle_path=/*"
+      - "caddy_0.handle_path.0_reverse_proxy={{upstreams 3000}}"
+      - "caddy_0.encode=zstd gzip"
+      - "caddy_0.header=-Server"
+      - "caddy_ingress_network=coolify"
     environment:
       DATABASE_URL: ${DATABASE_URL}
       NEXTAUTH_URL: ${NEXTAUTH_URL}
