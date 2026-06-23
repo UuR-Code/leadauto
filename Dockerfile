@@ -5,7 +5,10 @@ RUN npm install -g pnpm@10
 FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# Alpine için Prisma binary target ve engine binary'lerini atla
+ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
+ENV PRISMA_ENGINES_MIRROR=""
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # ---- builder ----
 FROM base AS builder
@@ -13,6 +16,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
+# Generate only the Prisma client (TypeScript types) — no engine download needed
 RUN npx prisma generate
 RUN pnpm build
 
@@ -20,6 +25,7 @@ RUN pnpm build
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs

@@ -3,7 +3,8 @@ RUN npm install -g pnpm@10
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
