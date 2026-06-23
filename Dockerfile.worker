@@ -8,6 +8,6 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-RUN npx prisma generate && echo "=== worker prisma generate OK ==="
+RUN npx prisma generate && ls node_modules/.prisma/client/index.js && echo "=== worker prisma generate OK ==="
 
 CMD ["pnpm", "worker"]
