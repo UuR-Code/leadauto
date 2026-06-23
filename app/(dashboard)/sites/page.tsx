@@ -4,7 +4,7 @@ import Link from "next/link"
 export const dynamic = "force-dynamic"
 
 export default async function SitesPage() {
-  let sites: Awaited<ReturnType<typeof prisma.firm.findMany>> = []
+  let sites: any[] = []
   try {
     sites = await prisma.firm.findMany({
       where: { status: { in: ["DEPLOYED", "SENT", "REPLIED", "MEETING", "CLOSED"] } },

@@ -25,7 +25,7 @@ export default async function FirmsPage({
 
   const where = status ? { status: status as never } : {}
 
-  let firms: Awaited<ReturnType<typeof prisma.firm.findMany>> = []
+  let firms: any[] = []
   let total = 0
   try {
     ;[firms, total] = await Promise.all([

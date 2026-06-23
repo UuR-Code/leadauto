@@ -4,7 +4,7 @@ import Link from "next/link"
 export const dynamic = "force-dynamic"
 
 export default async function LeadsPage() {
-  let leads: Awaited<ReturnType<typeof prisma.firm.findMany>> = []
+  let leads: any[] = []
   try {
     leads = await prisma.firm.findMany({
       where: { status: { in: ["REPLIED", "MEETING", "CLOSED"] } },

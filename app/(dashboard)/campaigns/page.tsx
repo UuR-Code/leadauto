@@ -4,7 +4,7 @@ import Link from "next/link"
 export const dynamic = "force-dynamic"
 
 export default async function CampaignsPage() {
-  let campaigns: Awaited<ReturnType<typeof prisma.campaign.findMany>> = []
+  let campaigns: any[] = []
   try {
     campaigns = await prisma.campaign.findMany({
       orderBy: { createdAt: "desc" },
