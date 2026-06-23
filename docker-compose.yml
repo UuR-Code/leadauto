@@ -16,13 +16,10 @@ services:
       GMAIL_USER: ${GMAIL_USER}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
-    depends_on:
-      redis:
-        condition: service_healthy
     networks:
-      - leadauto
+      - coolify
 
   worker:
     build:
@@ -35,30 +32,11 @@ services:
       GMAIL_USER: ${GMAIL_USER}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
       GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: ${REDIS_URL}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
-    depends_on:
-      redis:
-        condition: service_healthy
     networks:
-      - leadauto
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    networks:
-      - leadauto
-
-volumes:
-  redis_data:
+      - coolify
 
 networks:
-  leadauto:
-    driver: bridge
+  coolify:
+    external: true
