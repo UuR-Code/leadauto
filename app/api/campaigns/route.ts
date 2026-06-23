@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { isAuthenticated } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { scrapeQueue } from "@/lib/queue/queues"
 import { z } from "zod"
@@ -14,8 +14,7 @@ const CreateCampaignSchema = z.object({
 })
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!await isAuthenticated()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json()
   const parsed = CreateCampaignSchema.safeParse(body)
@@ -37,8 +36,7 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!await isAuthenticated()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const campaigns = await prisma.campaign.findMany({
     orderBy: { createdAt: "desc" },

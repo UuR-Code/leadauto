@@ -1,12 +1,11 @@
-import { auth } from "@/lib/auth"
+import { isAuthenticated } from "@/lib/auth"
 import Redis from "ioredis"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export async function GET() {
-  const session = await auth()
-  if (!session) return new Response("Unauthorized", { status: 401 })
+  if (!await isAuthenticated()) return new Response("Unauthorized", { status: 401 })
 
   const subscriber = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379")
 
