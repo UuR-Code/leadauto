@@ -10,4 +10,4 @@ COPY . .
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate && ls node_modules/.prisma/client/index.js && echo "=== worker prisma generate OK ==="
 
-CMD ["sh", "-c", "npx prisma db push --skip-generate 2>&1 | tail -5 && exec pnpm worker"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate --accept-data-loss && exec pnpm worker"]

@@ -9,12 +9,21 @@ import NewCampaignForm from "@/components/dashboard/NewCampaignForm"
 export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
-  const [stats, activeCampaign, recentFirms, funnelData] = await Promise.all([
-    getStats(),
-    getActiveCampaign(),
-    getRecentFirms(),
-    getFunnelData(),
-  ])
+  let stats = { firms: 0, sites: 0, emails: 0, replied: 0 }
+  let activeCampaign = null
+  let recentFirms: Awaited<ReturnType<typeof getRecentFirms>> = []
+  let funnelData: Awaited<ReturnType<typeof getFunnelData>> = []
+
+  try {
+    ;[stats, activeCampaign, recentFirms, funnelData] = await Promise.all([
+      getStats(),
+      getActiveCampaign(),
+      getRecentFirms(),
+      getFunnelData(),
+    ])
+  } catch (e) {
+    console.error("Dashboard DB error:", e)
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
