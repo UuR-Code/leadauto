@@ -10,7 +10,7 @@ const CreateCampaignSchema = z.object({
   city: z.string().min(1),
   district: z.string().min(1),
   channel: z.enum(["email", "whatsapp", "both"]).default("email"),
-  targetCount: z.number().int().min(10).max(500).default(100),
+  targetCount: z.number().int().min(1).max(500).default(100),
 })
 
 export async function POST(req: Request) {

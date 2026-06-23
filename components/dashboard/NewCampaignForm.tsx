@@ -116,14 +116,15 @@ export default function NewCampaignForm() {
           </div>
           <div>
             <label className="text-[10px] uppercase tracking-wider block mb-1.5" style={{ color: "#64748b" }}>Hedef Firma</label>
-            <select
+            <input
+              type="number"
+              min={1}
+              max={500}
               value={targetCount}
-              onChange={(e) => setTargetCount(Number(e.target.value))}
+              onChange={(e) => setTargetCount(Math.max(1, parseInt(e.target.value) || 1))}
               className="w-full rounded-lg px-3 py-2 text-sm border outline-none"
               style={{ background: "#0f1117", borderColor: "#1e2d45", color: "#e2e8f0" }}
-            >
-              {[50, 100, 250, 500].map((n) => <option key={n} value={n}>{n} firma</option>)}
-            </select>
+            />
           </div>
         </div>
 
