@@ -5,7 +5,7 @@ RUN npm install -g pnpm@10
 FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --frozen-lockfile
 
 # ---- builder ----
 FROM base AS builder
@@ -13,7 +13,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-RUN npx prisma generate --no-engine
+RUN npx prisma generate
 RUN pnpm build
 
 # ---- runner ----
