@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
@@ -14,6 +14,12 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.push("/login")
+  }
 
   return (
     <aside className="w-56 flex-shrink-0 flex flex-col border-r"
@@ -51,7 +57,7 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="p-3 border-t" style={{ borderColor: "#1e2d45" }}>
         <button
-          onClick={() => signOut()}
+          onClick={handleLogout}
           className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors"
           style={{ color: "#94a3b8" }}
         >

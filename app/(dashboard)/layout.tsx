@@ -1,13 +1,6 @@
-export const dynamic = "force-dynamic"
-
-import { auth } from "@/lib/auth"
-import { redirect } from "next/navigation"
 import Sidebar from "@/components/dashboard/Sidebar"
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth()
-  if (!session) redirect("/login")
-
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-full">
       <Sidebar />
