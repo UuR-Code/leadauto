@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  name        String
+  sector      String
+  city        String
+  district    String
+  channel     String         @default("email")
+  targetCount Int            @default(100)
+  status      CampaignStatus @default(RUNNING)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  firms       Firm[]
+}
+
+enum CampaignStatus {
+  RUNNING
+  PAUSED
+  COMPLETED
+}
+
+model Firm {
+  id          String     @id @default(cuid())
+  campaignId  String
+  campaign    Campaign   @relation(fields: [campaignId], references: [id])
+  name        String
+  address     String
+  phone       String?
+  email       String?
+  category    String
+  city        String
+  district    String
+  lat         Float?
+  lng         Float?
+  placeId     String?    @unique
+  photoUrl    String?
+  status      FirmStatus @default(SCRAPED)
+  demoUrl     String?
+  demoSlug    String?    @unique
+  deployedAt  DateTime?
+  emailSentAt DateTime?
+  repliedAt   DateTime?
+  replyText   String?    @db.Text
+  meetingAt   DateTime?
+  meetingNote String?    @db.Text
+  closedAt    DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  landingPage LandingPage?
+  emails      EmailLog[]
+}
+
+enum FirmStatus {
+  SCRAPED
+  PAGE_READY
+  DEPLOYED
+  SENT
+  REPLIED
+  MEETING
+  CLOSED
+  SKIPPED
+}
+
+model LandingPage {
+  id              String   @id @default(cuid())
+  firmId          String   @unique
+  firm            Firm     @relation(fields: [firmId], references: [id])
+  heroTitle       String
+  heroSub         String   @db.Text
+  services        Json
+  aboutText       String   @db.Text
+  ctaText         String
+  colorPrimary    String   @default("#2563eb")
+  vercelProjectId String?
+  createdAt       DateTime @default(now())
+}
+
+model EmailLog {
+  id        String      @id @default(cuid())
+  firmId    String
+  firm      Firm        @relation(fields: [firmId], references: [id])
+  to        String
+  subject   String
+  status    EmailStatus @default(PENDING)
+  messageId String?
+  openedAt  DateTime?
+  clickedAt DateTime?
+  sentAt    DateTime?
+  error     String?
+  createdAt DateTime    @default(now())
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+  OPENED
+  CLICKED
+}
