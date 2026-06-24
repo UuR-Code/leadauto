@@ -13,6 +13,7 @@ export default function NewCampaignForm() {
   const [targetCount, setTargetCount] = useState(100)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+  const [error, setError] = useState("")
 
   const selectedCity = CITIES.find((c) => c.value === city)
 
@@ -20,25 +21,34 @@ export default function NewCampaignForm() {
     e.preventDefault()
     if (!sector || !city || !district) return
     setLoading(true)
+    setError("")
 
-    const res = await fetch("/api/campaigns", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: `${selectedCity?.label} ${SECTORS.find((s) => s.value === sector)?.label} Kampanyası`,
-        sector,
-        city,
-        district,
-        channel,
-        targetCount,
-      }),
-    })
+    try {
+      const res = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${selectedCity?.label} ${SECTORS.find((s) => s.value === sector)?.label} Kampanyası`,
+          sector,
+          city,
+          district,
+          channel,
+          targetCount,
+        }),
+      })
 
-    if (res.ok) {
-      setDone(true)
-      setTimeout(() => { setDone(false); router.refresh() }, 2000)
+      if (res.ok) {
+        setDone(true)
+        setTimeout(() => { setDone(false); router.refresh() }, 2000)
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data?.error ? JSON.stringify(data.error) : `Hata: ${res.status}`)
+      }
+    } catch (err) {
+      setError("Sunucuya bağlanılamadı")
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -127,6 +137,12 @@ export default function NewCampaignForm() {
             />
           </div>
         </div>
+
+        {error && (
+          <p className="text-xs rounded-lg px-3 py-2" style={{ background: "rgba(239,68,68,0.15)", color: "#f87171" }}>
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
