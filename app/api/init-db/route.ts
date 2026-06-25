@@ -2,9 +2,9 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
 const statements = [
-  `CREATE TYPE IF NOT EXISTS "CampaignStatus" AS ENUM ('RUNNING', 'PAUSED', 'COMPLETED')`,
-  `CREATE TYPE IF NOT EXISTS "FirmStatus" AS ENUM ('SCRAPED', 'PAGE_READY', 'DEPLOYED', 'SENT', 'REPLIED', 'MEETING', 'CLOSED', 'SKIPPED')`,
-  `CREATE TYPE IF NOT EXISTS "EmailStatus" AS ENUM ('PENDING', 'SENT', 'FAILED', 'OPENED', 'CLICKED')`,
+  `DO $$ BEGIN CREATE TYPE "CampaignStatus" AS ENUM ('RUNNING','PAUSED','COMPLETED'); EXCEPTION WHEN duplicate_object THEN null; END $$`,
+  `DO $$ BEGIN CREATE TYPE "FirmStatus" AS ENUM ('SCRAPED','PAGE_READY','DEPLOYED','SENT','REPLIED','MEETING','CLOSED','SKIPPED'); EXCEPTION WHEN duplicate_object THEN null; END $$`,
+  `DO $$ BEGIN CREATE TYPE "EmailStatus" AS ENUM ('PENDING','SENT','FAILED','OPENED','CLICKED'); EXCEPTION WHEN duplicate_object THEN null; END $$`,
   `CREATE TABLE IF NOT EXISTS "Campaign" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
@@ -81,5 +81,6 @@ export async function POST() {
       results.push(`error: ${e?.message}`)
     }
   }
-  return NextResponse.json({ results })
+  const hasError = results.some((r) => r.startsWith("error"))
+  return NextResponse.json({ results }, { status: hasError ? 500 : 200 })
 }
