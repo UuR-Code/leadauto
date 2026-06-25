@@ -3,6 +3,13 @@ import Link from "next/link"
 
 export const dynamic = "force-dynamic"
 
+function getServiceTags(lp: any): string[] {
+  const bp = lp?.blueprint
+  const svcs = bp?.sections?.find((s: any) => s.type === "services")
+  if (svcs) return (svcs.items ?? []).slice(0, 3).map((s: any) => String(s.name ?? ""))
+  return ((lp?.services ?? []) as any[]).slice(0, 3).map((s: any) => String(s?.name ?? s ?? ""))
+}
+
 export default async function SitesPage() {
   let sites: any[] = []
   try {
@@ -64,21 +71,7 @@ export default async function SitesPage() {
                     <span>{f.campaign?.sector ?? f.category}</span>
                   </div>
 
-                  {f.landingPage && (() => {
-                    const bp = f.landingPage.blueprint as any
-                    const servicesSection = bp?.sections?.find((s: any) => s.type === "services")
-                    const tags: string[] = servicesSection
-                      ? servicesSection.items?.slice(0, 3).map((s: any) => s.name) ?? []
-                      : (f.landingPage.services as any[])?.slice(0, 3).map((s: any) => s.name ?? s) ?? []
-                    return tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {tags.map((tag, i) => (
-                          <span key={i} className="px-2 py-0.5 rounded text-[10px]"
-                            style={{ background: "#0f1117", color: "#64748b" }}>{tag}</span>
-                        ))}
-                      </div>
-                    ) : null
-                  })()}
+                  <ServiceTags lp={f.landingPage} />
 
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-[10px]" style={{ color: "#4a5568" }}>
@@ -98,6 +91,19 @@ export default async function SitesPage() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+function ServiceTags({ lp }: { lp: any }) {
+  const tags = getServiceTags(lp)
+  if (!tags.length) return null
+  return (
+    <div className="flex flex-wrap gap-1">
+      {tags.map((tag, i) => (
+        <span key={i} className="px-2 py-0.5 rounded text-[10px]"
+          style={{ background: "#0f1117", color: "#64748b" }}>{tag}</span>
+      ))}
     </div>
   )
 }
