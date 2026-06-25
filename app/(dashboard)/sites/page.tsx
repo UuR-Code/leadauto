@@ -64,14 +64,21 @@ export default async function SitesPage() {
                     <span>{f.campaign?.sector ?? f.category}</span>
                   </div>
 
-                  {f.landingPage && (
-                    <div className="flex flex-wrap gap-1">
-                      {(f.landingPage.services as string[]).slice(0, 3).map((s: string, i: number) => (
-                        <span key={i} className="px-2 py-0.5 rounded text-[10px]"
-                          style={{ background: "#0f1117", color: "#64748b" }}>{s}</span>
-                      ))}
-                    </div>
-                  )}
+                  {f.landingPage && (() => {
+                    const bp = f.landingPage.blueprint as any
+                    const servicesSection = bp?.sections?.find((s: any) => s.type === "services")
+                    const tags: string[] = servicesSection
+                      ? servicesSection.items?.slice(0, 3).map((s: any) => s.name) ?? []
+                      : (f.landingPage.services as any[])?.slice(0, 3).map((s: any) => s.name ?? s) ?? []
+                    return tags.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {tags.map((tag, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded text-[10px]"
+                            style={{ background: "#0f1117", color: "#64748b" }}>{tag}</span>
+                        ))}
+                      </div>
+                    ) : null
+                  })()}
 
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-[10px]" style={{ color: "#4a5568" }}>
