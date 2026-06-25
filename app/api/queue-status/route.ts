@@ -8,18 +8,11 @@ export async function GET() {
   if (!await isAuthenticated()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
-    const [waiting, active, completed, failed, delayed] = await Promise.all([
-      scrapeQueue.getWaitingCount(),
-      scrapeQueue.getActiveCount(),
-      scrapeQueue.getCompletedCount(),
-      scrapeQueue.getFailedCount(),
-      scrapeQueue.getDelayedCount(),
-    ])
-
+    const counts = await scrapeQueue.getJobCounts("waiting", "active", "completed", "failed", "delayed")
     const failedJobs = await scrapeQueue.getFailed(0, 5)
 
     return NextResponse.json({
-      scrapeQueue: { waiting, active, completed, failed, delayed },
+      scrapeQueue: counts,
       recentErrors: failedJobs.map((j: any) => ({
         id: j.id,
         data: j.data,
