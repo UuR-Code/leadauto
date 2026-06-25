@@ -2,7 +2,7 @@ import { Worker } from "bullmq"
 import Redis from "ioredis"
 const redis = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", { maxRetriesPerRequest: null })
 import { prisma } from "@/lib/prisma"
-import { generateLandingPageContent } from "@/lib/services/ai"
+import { generatePageBlueprint } from "@/lib/services/ai"
 import { deployQueue, type BuildPageJobData } from "@/lib/queue/queues"
 
 export const buildPageWorker = new Worker<BuildPageJobData>(
@@ -12,22 +12,36 @@ export const buildPageWorker = new Worker<BuildPageJobData>(
 
     const firm = await prisma.firm.findUniqueOrThrow({ where: { id: firmId } })
 
-    const content = await generateLandingPageContent(
-      firm.name,
-      firm.category,
-      firm.address,
-      firm.phone ?? undefined,
-    )
+    const blueprint = await generatePageBlueprint({
+      firmName: firm.name,
+      sector: firm.category,
+      city: firm.city,
+      district: firm.district,
+      address: firm.address,
+      phone: firm.phone ?? undefined,
+    })
+
+    // Extract legacy fields from blueprint for backwards compat
+    const heroSection = blueprint.sections.find((s) => s.type === "hero") as
+      | { type: "hero"; title: string; subtitle: string; ctaText: string }
+      | undefined
+    const servicesSection = blueprint.sections.find((s) => s.type === "services") as
+      | { type: "services"; items: { name: string; desc: string }[] }
+      | undefined
+    const aboutSection = blueprint.sections.find((s) => s.type === "about") as
+      | { type: "about"; text: string }
+      | undefined
 
     await prisma.landingPage.create({
       data: {
         firmId: firm.id,
-        heroTitle: content.heroTitle,
-        heroSub: content.heroSub,
-        services: content.services,
-        aboutText: content.aboutText,
-        ctaText: content.ctaText,
-        colorPrimary: content.colorPrimary,
+        heroTitle: heroSection?.title ?? firm.name,
+        heroSub: heroSection?.subtitle ?? "",
+        services: servicesSection?.items ?? [],
+        aboutText: aboutSection?.text ?? "",
+        ctaText: heroSection?.ctaText ?? "Hemen Ara",
+        colorPrimary: blueprint.theme.primaryColor,
+        blueprint: blueprint as object,
       },
     })
 

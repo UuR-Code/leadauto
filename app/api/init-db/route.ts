@@ -54,8 +54,10 @@ const statements = [
     "ctaText" TEXT NOT NULL,
     "colorPrimary" TEXT NOT NULL DEFAULT '#2563eb',
     "vercelProjectId" TEXT,
+    "blueprint" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
+  `ALTER TABLE "LandingPage" ADD COLUMN IF NOT EXISTS "blueprint" JSONB`,
   `CREATE TABLE IF NOT EXISTS "EmailLog" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "firmId" TEXT NOT NULL REFERENCES "Firm"("id"),

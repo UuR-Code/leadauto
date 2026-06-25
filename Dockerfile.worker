@@ -7,6 +7,8 @@ ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
-RUN npx prisma generate
+RUN npx prisma generate && \
+    PNPM_PRISMA=$(ls node_modules/.pnpm | grep "@prisma+client") && \
+    if [ -n "$PNPM_PRISMA" ]; then cp -r node_modules/.prisma/client/. node_modules/.pnpm/$PNPM_PRISMA/node_modules/.prisma/client/; fi
 
 CMD ["pnpm", "worker"]

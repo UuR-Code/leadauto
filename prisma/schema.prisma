@@ -81,6 +81,7 @@ model LandingPage {
   aboutText       String   @db.Text
   ctaText         String
   colorPrimary    String   @default("#2563eb")
+  blueprint       Json?
   vercelProjectId String?
   createdAt       DateTime @default(now())
 }
