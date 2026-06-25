@@ -1,5 +1,5 @@
-const PLACES_BASE = "https://maps.googleapis.com/maps/api/place"
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY!
+const BASE = "https://places.googleapis.com/v1/places"
 
 export type PlaceResult = {
   placeId: string
@@ -24,76 +24,79 @@ const SECTOR_QUERY: Record<string, string> = {
   pharmacy:     "eczane",
 }
 
+const FIELD_MASK = [
+  "places.id",
+  "places.displayName",
+  "places.formattedAddress",
+  "places.nationalPhoneNumber",
+  "places.websiteUri",
+  "places.location",
+  "places.photos",
+  "nextPageToken",
+].join(",")
+
 export async function searchPlacesWithoutWebsite(
   sector: string,
   city: string,
   district: string,
   maxResults = 100,
 ): Promise<PlaceResult[]> {
-  const query = `${SECTOR_QUERY[sector] ?? sector} ${district} ${city}`
+  const textQuery = `${SECTOR_QUERY[sector] ?? sector} ${district} ${city}`
   const results: PlaceResult[] = []
   let pageToken: string | undefined
 
   while (results.length < maxResults) {
-    const params = new URLSearchParams({
-      query,
-      key: API_KEY,
-      language: "tr",
-      region: "tr",
-      ...(pageToken ? { pagetoken: pageToken } : {}),
+    const body: Record<string, unknown> = {
+      textQuery,
+      languageCode: "tr",
+      regionCode: "TR",
+      maxResultCount: Math.min(20, maxResults - results.length),
+    }
+    if (pageToken) body.pageToken = pageToken
+
+    const res = await fetch(`${BASE}:searchText`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": API_KEY,
+        "X-Goog-FieldMask": FIELD_MASK,
+      },
+      body: JSON.stringify(body),
     })
 
-    const res = await fetch(`${PLACES_BASE}/textsearch/json?${params}`)
-    const data = await res.json()
-
-    if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
-      throw new Error(`Places API error: ${data.status}`)
+    if (!res.ok) {
+      const err = await res.text()
+      throw new Error(`Places API error: ${res.status} ${err}`)
     }
 
-    for (const place of data.results ?? []) {
-      const detail = await getPlaceDetail(place.place_id)
-      if (!detail.hasWebsite) {
-        results.push(detail)
-      }
+    const data = await res.json()
+
+    for (const place of data.places ?? []) {
+      const photoName = place.photos?.[0]?.name
+      const photoUrl = photoName
+        ? `${BASE}/${photoName.replace("places/", "")}/media?maxWidthPx=800&key=${API_KEY}`
+        : undefined
+
+      results.push({
+        placeId: place.id,
+        name: place.displayName?.text ?? "",
+        address: place.formattedAddress ?? "",
+        phone: place.nationalPhoneNumber,
+        photoUrl,
+        lat: place.location?.latitude ?? 0,
+        lng: place.location?.longitude ?? 0,
+        hasWebsite: !!place.websiteUri,
+        website: place.websiteUri,
+      })
+
       if (results.length >= maxResults) break
     }
 
-    pageToken = data.next_page_token
+    pageToken = data.nextPageToken
     if (!pageToken) break
 
-    // Places API requires a short wait before using next_page_token
     await new Promise((r) => setTimeout(r, 2000))
   }
 
-  return results
-}
-
-async function getPlaceDetail(placeId: string): Promise<PlaceResult> {
-  const params = new URLSearchParams({
-    place_id: placeId,
-    fields: "place_id,name,formatted_address,formatted_phone_number,website,geometry,photos",
-    key: API_KEY,
-    language: "tr",
-  })
-
-  const res = await fetch(`${PLACES_BASE}/details/json?${params}`)
-  const data = await res.json()
-  const p = data.result
-
-  const photoRef = p.photos?.[0]?.photo_reference
-  const photoUrl = photoRef
-    ? `${PLACES_BASE}/photo?maxwidth=800&photo_reference=${photoRef}&key=${API_KEY}`
-    : undefined
-
-  return {
-    placeId: p.place_id,
-    name: p.name,
-    address: p.formatted_address,
-    phone: p.formatted_phone_number,
-    photoUrl,
-    lat: p.geometry?.location?.lat,
-    lng: p.geometry?.location?.lng,
-    hasWebsite: !!p.website,
-    website: p.website,
-  }
+  return results.filter((p) => !p.hasWebsite)
 }
