@@ -13,6 +13,7 @@ const statements = [
     "district" TEXT NOT NULL,
     "channel" TEXT NOT NULL DEFAULT 'email',
     "targetCount" INTEGER NOT NULL DEFAULT 100,
+    "requireNoWebsite" BOOLEAN NOT NULL DEFAULT true,
     "status" "CampaignStatus" NOT NULL DEFAULT 'RUNNING',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -58,6 +59,7 @@ const statements = [
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
   `ALTER TABLE "LandingPage" ADD COLUMN IF NOT EXISTS "blueprint" JSONB`,
+  `ALTER TABLE "Campaign" ADD COLUMN IF NOT EXISTS "requireNoWebsite" BOOLEAN NOT NULL DEFAULT true`,
   `CREATE TABLE IF NOT EXISTS "EmailLog" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "firmId" TEXT NOT NULL REFERENCES "Firm"("id"),

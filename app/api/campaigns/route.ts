@@ -11,6 +11,7 @@ const CreateCampaignSchema = z.object({
   district: z.string().min(1),
   channel: z.enum(["email", "whatsapp", "both"]).default("email"),
   targetCount: z.number().int().min(1).max(500).default(100),
+  requireNoWebsite: z.boolean().default(true),
 })
 
 export async function POST(req: Request) {
@@ -20,15 +21,15 @@ export async function POST(req: Request) {
   const parsed = CreateCampaignSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
 
-  const { name, sector, city, district, channel, targetCount } = parsed.data
+  const { name, sector, city, district, channel, targetCount, requireNoWebsite } = parsed.data
 
   const campaign = await prisma.campaign.create({
-    data: { name, sector, city, district, channel, targetCount, status: "RUNNING" },
+    data: { name, sector, city, district, channel, targetCount, requireNoWebsite, status: "RUNNING" },
   })
 
   await scrapeQueue.add(
     "scrape",
-    { campaignId: campaign.id, sector, city, district, targetCount },
+    { campaignId: campaign.id, sector, city, district, targetCount, requireNoWebsite },
     { attempts: 2 },
   )
 

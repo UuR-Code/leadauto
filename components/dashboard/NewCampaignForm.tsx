@@ -11,6 +11,7 @@ export default function NewCampaignForm() {
   const [district, setDistrict] = useState("")
   const [channel, setChannel] = useState("email")
   const [targetCount, setTargetCount] = useState(100)
+  const [requireNoWebsite, setRequireNoWebsite] = useState(true)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState("")
@@ -34,6 +35,7 @@ export default function NewCampaignForm() {
           district,
           channel,
           targetCount,
+          requireNoWebsite,
         }),
       })
 
@@ -108,6 +110,24 @@ export default function NewCampaignForm() {
               {selectedCity?.districts.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
+        </div>
+
+        {/* Website filter */}
+        <div className="flex items-center justify-between rounded-lg px-3 py-2.5 border" style={{ background: "#0f1117", borderColor: "#1e2d45" }}>
+          <div>
+            <div className="text-xs font-medium" style={{ color: "#e2e8f0" }}>Sadece websitesi olmayanlar</div>
+            <div className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>
+              {requireNoWebsite ? "Sadece site sahibi olmayan firmalar hedeflenir" : "Tüm firmalar hedeflenir (test modu)"}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRequireNoWebsite(!requireNoWebsite)}
+            className="w-10 h-5 rounded-full transition-all relative flex-shrink-0"
+            style={{ background: requireNoWebsite ? "#3b82f6" : "#334155" }}
+          >
+            <span className="block w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all" style={{ left: requireNoWebsite ? "calc(100% - 18px)" : "2px" }} />
+          </button>
         </div>
 
         {/* Channel + Count */}

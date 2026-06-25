@@ -2,17 +2,22 @@ import { Worker } from "bullmq"
 import Redis from "ioredis"
 const redis = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", { maxRetriesPerRequest: null })
 import { prisma } from "@/lib/prisma"
-import { searchPlacesWithoutWebsite } from "@/lib/services/places"
+import { searchPlaces } from "@/lib/services/places"
 import { buildPageQueue, deployQueue, type ScrapeJobData } from "@/lib/queue/queues"
 
 export const scrapeWorker = new Worker<ScrapeJobData>(
   "scrape",
   async (job) => {
-    const { campaignId, sector, city, district, targetCount } = job.data
+    const { campaignId, sector, city, district, targetCount, requireNoWebsite = true } = job.data
 
     await job.updateProgress(0)
 
-    const places = await searchPlacesWithoutWebsite(sector, city, district, targetCount)
+    const searchResult = await searchPlaces(sector, city, district, targetCount, requireNoWebsite)
+    const places = searchResult.places
+
+    console.log(
+      `[scrape] ${sector} in ${district}/${city}: total=${searchResult.totalFound} withSite=${searchResult.withWebsite} withoutSite=${searchResult.withoutWebsite} using=${places.length} (requireNoWebsite=${requireNoWebsite})`,
+    )
 
     let processed = 0
     for (const place of places) {
@@ -53,10 +58,15 @@ export const scrapeWorker = new Worker<ScrapeJobData>(
 
     await prisma.campaign.update({
       where: { id: campaignId },
-      data: { status: places.length < targetCount ? "COMPLETED" : "RUNNING" },
+      data: { status: "COMPLETED" },
     })
 
-    return { found: places.length, saved: processed }
+    return {
+      found: places.length,
+      saved: processed,
+      totalSearched: searchResult.totalFound,
+      filteredOut: searchResult.withWebsite,
+    }
   },
   { connection: { url: process.env.REDIS_URL ?? "redis://localhost:6379" }, concurrency: 1 },
 )

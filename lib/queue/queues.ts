@@ -33,6 +33,7 @@ export type ScrapeJobData = {
   city: string
   district: string
   targetCount: number
+  requireNoWebsite?: boolean
 }
 
 export type BuildPageJobData = { firmId: string }

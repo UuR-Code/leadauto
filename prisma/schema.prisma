@@ -14,9 +14,10 @@ model Campaign {
   sector      String
   city        String
   district    String
-  channel     String         @default("email")
-  targetCount Int            @default(100)
-  status      CampaignStatus @default(RUNNING)
+  channel          String         @default("email")
+  targetCount      Int            @default(100)
+  requireNoWebsite Boolean        @default(true)
+  status           CampaignStatus @default(RUNNING)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   firms       Firm[]
