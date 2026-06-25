@@ -38,10 +38,13 @@ export async function POST(req: Request) {
 export async function GET() {
   if (!await isAuthenticated()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const campaigns = await prisma.campaign.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { _count: { select: { firms: true } } },
-  })
-
-  return NextResponse.json(campaigns)
+  try {
+    const campaigns = await prisma.campaign.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { _count: { select: { firms: true } } },
+    })
+    return NextResponse.json(campaigns)
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message ?? String(e) }, { status: 500 })
+  }
 }
