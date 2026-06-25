@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { isAuthenticated } from "@/lib/auth"
-import { scrapeQueue } from "@/lib/queue/queues"
+import { getScrapeQueue } from "@/lib/queue/queues"
 
 export const dynamic = "force-dynamic"
 
@@ -8,8 +8,9 @@ export async function GET() {
   if (!await isAuthenticated()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
-    const counts = await scrapeQueue.getJobCounts("waiting", "active", "completed", "failed", "delayed")
-    const failedJobs = await scrapeQueue.getFailed(0, 5)
+    const q = getScrapeQueue()
+    const counts = await q.getJobCounts("waiting", "active", "completed", "failed", "delayed")
+    const failedJobs = await q.getFailed(0, 5)
 
     return NextResponse.json({
       scrapeQueue: counts,
