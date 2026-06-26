@@ -15,6 +15,82 @@ import type {
   FaqSection,
   AboutSection,
 } from "@/lib/services/ai"
+import { HeroSlider } from "./HeroSlider"
+
+// ─── Sector image library (Unsplash stable photo IDs) ────────────────────────
+
+const SECTOR_PHOTOS: Record<string, string[]> = {
+  gym: [
+    "1534438327429-1f3cb61d6a35",
+    "1571902943202-507ec2618e8f",
+    "1517836357463-d25dfeac3438",
+    "1581009146145-b5ef050c2e1e",
+  ],
+  spor: [
+    "1534438327429-1f3cb61d6a35",
+    "1571902943202-507ec2618e8f",
+    "1581009146145-b5ef050c2e1e",
+    "1549060279-7e168fcee0c2",
+  ],
+  restaurant: [
+    "1414235077428-338989a2e8c0",
+    "1555396273-367ea4eb4db5",
+    "1466637574441-749b8f19452f",
+    "1544025162-d76694265947",
+  ],
+  restoran: [
+    "1414235077428-338989a2e8c0",
+    "1555396273-367ea4eb4db5",
+    "1466637574441-749b8f19452f",
+    "1544025162-d76694265947",
+  ],
+  cafe: [
+    "1501339847302-ac426a4a7cbb",
+    "1495474472287-4d71bcdd2085",
+    "1442512595331-e89bad46a7b3",
+    "1447933601428-9abf002b9a69",
+  ],
+  barber: [
+    "1503951914875-452162b0f3f1",
+    "1521590832167-7bcbfaa6381f",
+    "1599351431613-18ef1fdd27e1",
+    "1605497788044-5a32c7078486",
+  ],
+  kuafor: [
+    "1560066984-138dadb4c035",
+    "1522337360788-8b13dee7a37e",
+    "1599351431613-18ef1fdd27e1",
+    "1521590832167-7bcbfaa6381f",
+  ],
+  dental: [
+    "1588776814546-1ffbb4d18d6b",
+    "1609840114035-3c981b782dfe",
+    "1598256987236-8836eed163ba",
+  ],
+  doktor: [
+    "1559757148-5c350d0d3c56",
+    "1576091160399-112ba8d25d1d",
+    "1581056771392-c13f8b63a547",
+  ],
+  oto: [
+    "1503376780353-7e6692767b70",
+    "1486006920555-c77dcf18193c",
+    "1542362567-b07e54358753",
+  ],
+  default: [
+    "1486406913551-ed72e35db2c2",
+    "1497366216548-37526070297c",
+    "1560179707-f14e90ef3623",
+  ],
+}
+
+function getSectorImages(sector: string, photoUrl: string | null): string[] {
+  const key = Object.keys(SECTOR_PHOTOS).find(k => sector.toLowerCase().includes(k)) ?? "default"
+  const ids = SECTOR_PHOTOS[key]
+  const unsplash = ids.map(id => `https://images.unsplash.com/photo-${id}?w=1920&q=80&auto=format&fit=crop`)
+  // Put the firm's own Google photo first if available
+  return photoUrl ? [photoUrl, ...unsplash.slice(0, 2)] : unsplash.slice(0, 3)
+}
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -185,17 +261,17 @@ function Hero({ s, t, firm }: { s: HeroSection; t: ThemeVars; firm: FirmRow }) {
 
 function Stats({ s, t }: { s: StatsSection; t: ThemeVars }) {
   return (
-    <section id="stats" style={{ background: t.bgMid, padding: "48px 24px", borderTop: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}` }}>
+    <section id="stats" style={{ background: t.bgMid, padding: "64px 24px", borderTop: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}` }}>
       <div style={{
         maxWidth: 900, margin: "0 auto",
         display: "grid",
         gridTemplateColumns: `repeat(${Math.min(s.items.length, 4)}, 1fr)`,
-        gap: 24, textAlign: "center",
+        gap: 32, textAlign: "center",
       }}>
         {s.items.map((item, i) => (
-          <div key={i}>
-            <div style={{ fontSize: 36, fontWeight: 900, color: t.primary, lineHeight: 1 }}>{item.value}</div>
-            <div style={{ fontSize: 13, color: t.textMuted, marginTop: 6, fontWeight: 500 }}>{item.label}</div>
+          <div key={i} className="reveal-card" data-delay={String(i * 100)}>
+            <div style={{ fontSize: 42, fontWeight: 900, color: t.primary, lineHeight: 1 }}>{item.value}</div>
+            <div style={{ fontSize: 14, color: t.textMuted, marginTop: 8, fontWeight: 600 }}>{item.label}</div>
           </div>
         ))}
       </div>
@@ -204,33 +280,38 @@ function Stats({ s, t }: { s: StatsSection; t: ThemeVars }) {
 }
 
 function Services({ s, t }: { s: ServicesSection; t: ThemeVars }) {
-  const cols = s.items.length <= 2 ? s.items.length : s.items.length <= 4 ? 2 : 3
   return (
-    <section id="services" style={{ padding: "80px 24px" }}>
+    <section id="services" style={{ padding: "96px 24px" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <h2 style={{ textAlign: "center", fontSize: 32, fontWeight: 800, color: t.dark ? "#fff" : "#0f172a", marginBottom: 48 }}>
+        <h2 className="section-title" style={{ textAlign: "center", fontSize: "clamp(26px,4vw,38px)", fontWeight: 800, color: t.dark ? "#fff" : "#0f172a", marginBottom: 16 }}>
           {s.title ?? "Hizmetlerimiz"}
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(260px, 1fr))`, gap: 24 }}>
+        <p className="section-title" data-delay="100" style={{ textAlign: "center", color: t.textMuted, fontSize: 16, maxWidth: 480, margin: "0 auto 56px" }}>
+          Kaliteli ve profesyonel hizmet anlayışımızla yanınızdayız.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(280px, 1fr))`, gap: 24 }}>
           {s.items.map((item, i) => (
-            <div key={i} style={{
+            <div key={i} className="reveal-card" data-delay={String(i * 80)} style={{
               background: t.bgCard, border: `1px solid ${t.border}`,
-              borderRadius: 20, padding: 28,
-              boxShadow: t.dark ? "none" : "0 2px 16px rgba(0,0,0,0.06)",
-              transition: "transform 0.2s",
+              borderRadius: 24, padding: 32,
+              boxShadow: t.dark ? "0 4px 24px rgba(0,0,0,0.3)" : "0 4px 24px rgba(0,0,0,0.06)",
+              transition: "transform 0.25s, box-shadow 0.25s",
             }}>
               {item.icon && (
                 <div style={{
-                  width: 52, height: 52, borderRadius: 14,
-                  background: `${t.primary}18`, display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  fontSize: 26, marginBottom: 18,
+                  width: 56, height: 56, borderRadius: 16,
+                  background: `linear-gradient(135deg, ${t.primary}30, ${t.accent ?? t.primary}18)`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 28, marginBottom: 20,
                 }}>{item.icon}</div>
               )}
-              <h3 style={{ fontWeight: 700, color: t.dark ? "#fff" : "#0f172a", marginBottom: 8, fontSize: 17 }}>{item.name}</h3>
-              <p style={{ color: t.textMuted, fontSize: 14, lineHeight: 1.65, margin: 0 }}>{item.desc}</p>
+              <h3 style={{ fontWeight: 700, color: t.dark ? "#fff" : "#0f172a", marginBottom: 10, fontSize: 18 }}>{item.name}</h3>
+              <p style={{ color: t.textMuted, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
               {item.price && (
-                <div style={{ color: t.primary, fontWeight: 700, fontSize: 16, marginTop: 14 }}>{item.price}</div>
+                <div style={{
+                  color: t.primary, fontWeight: 800, fontSize: 18, marginTop: 20,
+                  paddingTop: 16, borderTop: `1px solid ${t.border}`,
+                }}>{item.price}</div>
               )}
             </div>
           ))}
@@ -371,23 +452,32 @@ function Team({ s, t }: { s: TeamSection; t: ThemeVars }) {
 function Testimonials({ s, t }: { s: TestimonialsSection; t: ThemeVars }) {
   const stars = (n: number) => "★".repeat(Math.min(5, Math.max(0, n))) + "☆".repeat(Math.max(0, 5 - n))
   return (
-    <section id="testimonials" style={{ padding: "80px 24px", background: t.bgMid }}>
+    <section id="testimonials" style={{ padding: "96px 24px", background: t.bgMid }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <h2 style={{ textAlign: "center", fontSize: 32, fontWeight: 800, color: t.dark ? "#fff" : "#0f172a", marginBottom: 48 }}>
+        <h2 className="section-title" style={{ textAlign: "center", fontSize: "clamp(26px,4vw,38px)", fontWeight: 800, color: t.dark ? "#fff" : "#0f172a", marginBottom: 56 }}>
           {s.title ?? "Müşteri Yorumları"}
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24 }}>
           {s.items.map((item, i) => (
-            <div key={i} style={{
+            <div key={i} className="reveal-card" data-delay={String(i * 100)} style={{
               background: t.bgCard, border: `1px solid ${t.border}`,
-              borderRadius: 20, padding: 28,
-              boxShadow: t.dark ? "none" : "0 2px 12px rgba(0,0,0,0.06)",
+              borderRadius: 24, padding: 32,
+              boxShadow: t.dark ? "0 4px 24px rgba(0,0,0,0.3)" : "0 4px 24px rgba(0,0,0,0.06)",
+              position: "relative",
             }}>
-              <div style={{ color: "#f59e0b", fontSize: 18, marginBottom: 12 }}>{stars(item.rating)}</div>
-              <p style={{ color: t.text, lineHeight: 1.7, fontSize: 15, fontStyle: "italic", margin: "0 0 16px" }}>
+              <div style={{ color: "#f59e0b", fontSize: 20, marginBottom: 16, letterSpacing: 2 }}>{stars(item.rating)}</div>
+              <p style={{ color: t.text, lineHeight: 1.8, fontSize: 15, fontStyle: "italic", margin: "0 0 20px" }}>
                 &ldquo;{item.text}&rdquo;
               </p>
-              <div style={{ color: t.primary, fontWeight: 600, fontSize: 14 }}>— {item.author}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: "50%",
+                  background: `linear-gradient(135deg, ${t.primary}, ${t.accent ?? t.primary})`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "#fff", fontWeight: 700, fontSize: 16,
+                }}>{item.author.charAt(0)}</div>
+                <div style={{ color: t.dark ? "#fff" : "#0f172a", fontWeight: 700, fontSize: 14 }}>{item.author}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -609,25 +699,95 @@ export default async function DemoPage({ params }: Props) {
 
   const t = getTheme(blueprint)
 
+  const heroSection = blueprint.sections.find(s => s.type === "hero") as HeroSection | undefined
+  const nonHeroSections = blueprint.sections.filter(s => s.type !== "hero")
+  const sliderImages = getSectorImages(firm.category, firm.photoUrl)
+
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         html { scroll-behavior: smooth; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         @media (min-width: 640px) { .nav-link { display: block !important; } }
         details summary::-webkit-details-marker { display: none; }
         details[open] summary span:last-child { transform: rotate(45deg); display: inline-block; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(40px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        .reveal { opacity: 0; }
+        .reveal.visible {
+          animation: fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+        }
+        .reveal-card { opacity: 0; }
+        .reveal-card.visible {
+          animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
+        }
+        .section-title { opacity: 0; }
+        .section-title.visible {
+          animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
+        }
       `}</style>
+
+      {/* Intersection Observer script */}
+      <script dangerouslySetInnerHTML={{ __html: `
+        (function() {
+          var io = new IntersectionObserver(function(entries) {
+            entries.forEach(function(e) {
+              if (e.isIntersecting) {
+                var el = e.target;
+                var delay = el.dataset.delay || 0;
+                setTimeout(function() { el.classList.add('visible'); }, delay);
+                io.unobserve(el);
+              }
+            });
+          }, { threshold: 0.12 });
+          function observe() {
+            document.querySelectorAll('.reveal,.reveal-card,.section-title').forEach(function(el) { io.observe(el); });
+          }
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', observe);
+          } else {
+            observe();
+          }
+        })();
+      ` }} />
+
       <div style={{ background: t.bg, color: t.text, minHeight: "100vh" }}>
         <NavBar firm={firmRow} t={t} bp={blueprint} />
-        {blueprint.sections.map((section, i) => (
-          <div key={i}>{renderSection(section, t, firmRow)}</div>
+
+        {/* Full-screen hero slider */}
+        <HeroSlider
+          images={sliderImages}
+          firmName={firmRow.name}
+          district={firmRow.district}
+          city={firmRow.city}
+          phone={firmRow.phone}
+          primary={t.primary}
+          title={heroSection?.title ?? firmRow.name}
+          subtitle={heroSection?.subtitle ?? ""}
+          ctaText={heroSection?.ctaText ?? "Hemen Ara"}
+          badge={heroSection?.badge}
+        />
+
+        {/* Rest of sections (no hero) */}
+        {nonHeroSections.map((section, i) => (
+          <div key={i} className="reveal" data-delay={String(i * 60)}>
+            {renderSection(section, t, firmRow)}
+          </div>
         ))}
-        <footer style={{ background: t.dark ? "#080f1a" : "#f1f5f9", borderTop: `1px solid ${t.border}`, padding: "28px 24px", textAlign: "center" }}>
+
+        <footer style={{ background: t.dark ? "#080f1a" : "#f1f5f9", borderTop: `1px solid ${t.border}`, padding: "32px 24px", textAlign: "center" }}>
           <div style={{ color: t.textMuted, fontSize: 13 }}>{blueprint.meta.title}</div>
           <div style={{ color: t.border, fontSize: 12, marginTop: 6 }}>Bu site demo amaçlıdır.</div>
         </footer>
-        <div style={{ position: "fixed", bottom: 16, right: 16, fontSize: 12, padding: "6px 14px", borderRadius: 999, background: t.bgCard, border: `1px solid ${t.border}`, color: t.textMuted }}>
+
+        <div style={{ position: "fixed", bottom: 16, right: 16, fontSize: 12, padding: "6px 14px", borderRadius: 999, background: t.bgCard, border: `1px solid ${t.border}`, color: t.textMuted, zIndex: 50 }}>
           Demo Site
         </div>
       </div>
