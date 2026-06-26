@@ -15,9 +15,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npx prisma generate && \
-    PNPM_PRISMA=$(ls node_modules/.pnpm | grep "@prisma+client") && \
-    if [ -n "$PNPM_PRISMA" ]; then cp -r node_modules/.prisma/client/. node_modules/.pnpm/$PNPM_PRISMA/node_modules/.prisma/client/; fi
+RUN npx prisma generate
 RUN pnpm build
 
 # ---- runner ----
