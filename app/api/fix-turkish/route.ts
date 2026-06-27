@@ -1,94 +1,75 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-// Fix corrupted Turkish chars stored as '?' in DB
-// Pattern: specific known Turkish city/district names
-const DISTRICT_MAP: Record<string, string> = {
-  "?ankaya": "Çankaya", "cankaya": "Çankaya",
-  "?stanbul": "İstanbul",
-  "kad?k?y": "Kadıköy", "kad?köy": "Kadıköy",
-  "be?ikta?": "Beşiktaş",
-  "ba?ak?ehir": "Başakşehir",
-  "?i?li": "Şişli", "si?li": "Şişli",
-  "?sk?dar": "Üsküdar",
-  "bey?lu": "Beyoğlu",
-  "g?ng?ren": "Güngören",
-  "k???kçekmece": "Küçükçekmece",
-  "ba?c?lar": "Bağcılar",
-  "g?ztepe": "Göztepe",
-  "?lçe": "İlçe",
-  "mamak": "Mamak",
-  "ankara": "Ankara",
-  "istanbul": "İstanbul",
+// Reverse UTF-8 → CP1252 → UTF-8 double-encoding (mojibake)
+// Each entry: [corrupted string in DB, correct Turkish char]
+const MOJIBAKE: [string, string][] = [
+  ["Ã‡", "Ç"],   // C3 87 double-encoded
+  ["Ã§",     "ç"],   // C3 A7 double-encoded
+  ["Ä°",     "İ"],   // C4 B0 double-encoded
+  ["Ä±",     "ı"],   // C4 B1 double-encoded
+  ["Äž",     "Ğ"],   // C4 9E double-encoded (0x9E cp1252 = U+017E ž)
+  ["ÄŸ",     "ğ"],   // C4 9F double-encoded (0x9F cp1252 = U+0178 Ÿ)
+  ["Åž", "Ş"],  // C5 9E double-encoded
+  ["ÅŸ",     "ş"],   // C5 9F double-encoded
+  ["Ã–", "Ö"],  // C3 96 double-encoded (0x96 cp1252 = U+2013 –)
+  ["Ã¶",     "ö"],   // C3 B6 double-encoded
+  ["Ãœ",     "Ü"],   // C3 9C double-encoded (0x9C cp1252 = U+0153 œ)
+  ["Ã¼",     "ü"],   // C3 BC double-encoded
+  ["Ã‚",     "Â"],   // generic fix
+  ["Ã", "Â"],
+  ["â", "\""], // curly quote
+  ["â", "\""],
+]
+
+function fixMojibake(s: string): string {
+  let r = s
+  for (const [bad, good] of MOJIBAKE) {
+    r = r.split(bad).join(good)
+  }
+  return r
 }
 
-function fixField(val: string): string {
-  const lower = val.toLowerCase()
-  return DISTRICT_MAP[lower] ?? DISTRICT_MAP[val] ?? val
-}
-
-const REPL = "�"  // Unicode replacement character (stored when encoding fails)
-const Q = "\\?"
-
-// Generic: replace U+FFFD or '?' with correct Turkish chars using context
-function fixGeneric(val: string): string {
-  return val
-    // U+FFFD variants
-    .replace(new RegExp(`${REPL}ankaya`, "gi"), "Çankaya")
-    .replace(new RegExp(`${REPL}stanbul`, "gi"), "İstanbul")
-    .replace(new RegExp(`Kad${REPL}k${REPL}y`, "gi"), "Kadıköy")
-    .replace(new RegExp(`Kad${REPL}köy`, "gi"), "Kadıköy")
-    .replace(new RegExp(`Be${REPL}ikta${REPL}`, "gi"), "Beşiktaş")
-    .replace(new RegExp(`Ba${REPL}ak${REPL}ehir`, "gi"), "Başakşehir")
-    .replace(new RegExp(`${REPL}i${REPL}li`, "gi"), "Şişli")
-    .replace(new RegExp(`${REPL}sk${REPL}dar`, "gi"), "Üsküdar")
-    .replace(new RegExp(`Bey${REPL}lu`, "gi"), "Beyoğlu")
-    .replace(new RegExp(`G${REPL}ng${REPL}ren`, "gi"), "Güngören")
-    .replace(new RegExp(`K${REPL}${REPL}${REPL}kçekmece`, "gi"), "Küçükçekmece")
-    .replace(new RegExp(`Ba${REPL}c${REPL}lar`, "gi"), "Bağcılar")
-    .replace(new RegExp(`G${REPL}ztepe`, "gi"), "Göztepe")
-    .replace(new RegExp(`${REPL}zmir`, "gi"), "İzmir")
-    .replace(new RegExp(`Bursa`, "gi"), "Bursa")
-    // literal '?' variants
-    .replace(/\?ankaya/gi, "Çankaya")
-    .replace(/\?stanbul/gi, "İstanbul")
-    .replace(/Kad\?k\?y/gi, "Kadıköy")
+async function fixTable(
+  rows: { id: string; [k: string]: string }[],
+  fields: string[],
+  update: (id: string, data: Record<string, string>) => Promise<void>
+) {
+  let fixed = 0
+  for (const row of rows) {
+    const changes: Record<string, string> = {}
+    for (const f of fields) {
+      const v = row[f] ?? ""
+      const fixed_v = fixMojibake(v)
+      if (fixed_v !== v) changes[f] = fixed_v
+    }
+    if (Object.keys(changes).length > 0) {
+      await update(row.id, changes)
+      fixed++
+    }
+  }
+  return fixed
 }
 
 export async function POST() {
   const firms = await prisma.firm.findMany({
-    select: { id: true, district: true, city: true, name: true, address: true },
-  })
+    select: { id: true, name: true, district: true, city: true, address: true, category: true },
+  }) as any[]
 
-  let fixed = 0
-  for (const f of firms) {
-    const d = fixField(f.district) !== f.district ? fixField(f.district) : fixGeneric(f.district)
-    const c = fixField(f.city) !== f.city ? fixField(f.city) : fixGeneric(f.city)
-    const n = fixGeneric(f.name)
-    const a = fixGeneric(f.address)
+  const firmFixed = await fixTable(firms, ["name", "district", "city", "address", "category"], (id, data) =>
+    prisma.firm.update({ where: { id }, data })
+  )
 
-    if (d !== f.district || c !== f.city || n !== f.name || a !== f.address) {
-      await prisma.firm.update({
-        where: { id: f.id },
-        data: { district: d, city: c, name: n, address: a },
-      })
-      fixed++
-    }
-  }
-
-  // Also fix campaigns
   const campaigns = await prisma.campaign.findMany({
-    select: { id: true, district: true, city: true },
-  })
-  let cfixed = 0
-  for (const c of campaigns) {
-    const d = fixField(c.district) !== c.district ? fixField(c.district) : fixGeneric(c.district)
-    const ci = fixField(c.city) !== c.city ? fixField(c.city) : fixGeneric(c.city)
-    if (d !== c.district || ci !== c.city) {
-      await prisma.campaign.update({ where: { id: c.id }, data: { district: d, city: ci } })
-      cfixed++
-    }
-  }
+    select: { id: true, name: true, district: true, city: true, sector: true },
+  }) as any[]
 
-  return NextResponse.json({ firms: { fixed, total: firms.length }, campaigns: { fixed: cfixed, total: campaigns.length } })
+  const campFixed = await fixTable(campaigns, ["name", "district", "city", "sector"], (id, data) =>
+    prisma.campaign.update({ where: { id }, data })
+  )
+
+  return NextResponse.json({
+    firms: { fixed: firmFixed, total: firms.length },
+    campaigns: { fixed: campFixed, total: campaigns.length },
+  })
 }
