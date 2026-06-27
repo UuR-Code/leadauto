@@ -2,21 +2,17 @@ import { prisma } from "@/lib/prisma"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import type {
-  PageBlueprint,
-  PageSection,
-  HeroSection,
-  StatsSection,
-  ServicesSection,
-  MenuSection,
-  PricingSection,
-  ScheduleSection,
-  TeamSection,
-  TestimonialsSection,
-  FaqSection,
-  AboutSection,
+  PageBlueprint, PageSection, HeroSection, StatsSection, ServicesSection,
+  MenuSection, PricingSection, ScheduleSection, TeamSection, TestimonialsSection,
+  FaqSection, AboutSection, GallerySection, VideoSection, ComparisonSection, LogosSection,
 } from "@/lib/services/ai"
 import { HeroSlider } from "./HeroSlider"
 import { FloatingCTA } from "./FloatingCTA"
+import { NavBarClient } from "./NavBarClient"
+import { StatCounter } from "./StatCounter"
+import { ExitIntent } from "./ExitIntent"
+import { Gallery } from "./Gallery"
+import { ContactForm } from "./ContactForm"
 
 // ─── Sector image library (Unsplash stable photo IDs) ────────────────────────
 
@@ -103,9 +99,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   })
   if (!firm) return { title: "Sayfa Bulunamadı" }
   const bp = firm.landingPage?.blueprint as PageBlueprint | null
+  const title = bp?.meta.title ?? `${firm.name} — ${firm.district}, ${firm.city}`
+  const description = bp?.meta.description ?? `${firm.name} — ${firm.district}, ${firm.city}. Hizmetlerimiz için hemen arayın.`
+  const ogImage = firm.photoUrl ?? `https://images.unsplash.com/photo-1486406913551-ed72e35db2c2?w=1200&q=80`
   return {
-    title: bp?.meta.title ?? `${firm.name} — Demo Site`,
-    description: bp?.meta.description ?? `${firm.name} resmi web sitesi.`,
+    title,
+    description,
+    keywords: (bp?.meta as any)?.keywords ?? [firm.category, firm.city, firm.district],
+    openGraph: {
+      title,
+      description,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: firm.name }],
+      type: "website",
+      locale: "tr_TR",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
   }
 }
 
@@ -149,49 +162,17 @@ type FirmRow = {
 
 // ─── Section renderers ────────────────────────────────────────────────────────
 
-function NavBar({ firm, t, bp }: { firm: FirmRow; t: ThemeVars; bp: PageBlueprint }) {
-  const navLinks = bp.sections
-    .filter((s) => !["hero", "contact"].includes(s.type))
-    .slice(0, 4)
-    .map((s) => {
-      const labels: Record<string, string> = {
-        services: "Hizmetler", menu: "Menü", pricing: "Fiyatlar",
-        team: "Ekip", about: "Hakkımızda", testimonials: "Yorumlar",
-        faq: "SSS", stats: "Rakamlar", schedule: "Program",
-      }
-      return { href: `#${s.type}`, label: labels[s.type] ?? s.type }
-    })
-
-  return (
-    <nav style={{
-      position: "sticky", top: 0, zIndex: 50,
-      background: t.dark ? "rgba(15,23,42,0.95)" : "rgba(255,255,255,0.95)",
-      backdropFilter: "blur(12px)",
-      borderBottom: `1px solid ${t.border}`,
-      padding: "0 24px",
-    }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-        <span style={{ fontWeight: 800, fontSize: 17, color: t.primary }}>{firm.name}</span>
-        <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-          {navLinks.map((l) => (
-            <a key={l.href} href={l.href} style={{
-              color: t.textMuted, textDecoration: "none", fontSize: 14,
-              fontWeight: 500, display: "none",
-            }}
-              className="nav-link"
-            >{l.label}</a>
-          ))}
-          {firm.phone && (
-            <a href={`tel:${firm.phone}`} style={{
-              background: t.primary, color: "#fff",
-              padding: "8px 20px", borderRadius: 8,
-              fontSize: 13, fontWeight: 700, textDecoration: "none",
-            }}>📞 Ara</a>
-          )}
-        </div>
-      </div>
-    </nav>
-  )
+function getNavLinks(bp: PageBlueprint) {
+  const labels: Record<string, string> = {
+    services: "Hizmetler", menu: "Menü", pricing: "Fiyatlar",
+    team: "Ekip", about: "Hakkımızda", testimonials: "Yorumlar",
+    faq: "SSS", stats: "Rakamlar", schedule: "Program",
+    gallery: "Galeri", video: "Video", comparison: "Neden Biz",
+  }
+  return bp.sections
+    .filter(s => !["hero", "contact", "logos"].includes(s.type))
+    .slice(0, 5)
+    .map(s => ({ href: `#${s.type}`, label: labels[s.type] ?? s.type }))
 }
 
 function Hero({ s, t, firm }: { s: HeroSection; t: ThemeVars; firm: FirmRow }) {
@@ -267,13 +248,10 @@ function Stats({ s, t }: { s: StatsSection; t: ThemeVars }) {
         maxWidth: 900, margin: "0 auto",
         display: "grid",
         gridTemplateColumns: `repeat(${Math.min(s.items.length, 4)}, 1fr)`,
-        gap: 32, textAlign: "center",
+        gap: 32,
       }}>
         {s.items.map((item, i) => (
-          <div key={i} className="reveal-card" data-delay={String(i * 100)}>
-            <div style={{ fontSize: 42, fontWeight: 900, color: t.primary, lineHeight: 1 }}>{item.value}</div>
-            <div style={{ fontSize: 14, color: t.textMuted, marginTop: 8, fontWeight: 600 }}>{item.label}</div>
-          </div>
+          <StatCounter key={i} value={item.value} label={item.label} primary={t.primary} textMuted={t.textMuted} delay={i * 120} />
         ))}
       </div>
     </section>
@@ -652,6 +630,152 @@ function Contact({ firm, t, note }: { firm: FirmRow; t: ThemeVars; note?: string
   )
 }
 
+function GallerySec({ s, t, sector }: { s: GallerySection; t: ThemeVars; sector: string }) {
+  const base = (s.keywords.length > 0 ? s.keywords : [sector]).slice(0, 6)
+  const images = base.map((kw, i) =>
+    `https://images.unsplash.com/photo-${GALLERY_SEEDS[sector.toLowerCase()]?.[i] ?? GALLERY_SEEDS.default[i % GALLERY_SEEDS.default.length]}?w=800&q=75&auto=format&fit=crop`
+  )
+  return (
+    <section id="gallery" style={{ padding: "96px 24px", background: t.bg }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <h2 className="section-title" style={{ textAlign: "center", fontSize: "clamp(26px,4vw,38px)", fontWeight: 800, color: t.dark ? "#fff" : "#0f172a", marginBottom: 48 }}>
+          {s.title ?? "Galerimiz"}
+        </h2>
+        <Gallery images={images} primary={t.primary} />
+      </div>
+    </section>
+  )
+}
+
+const GALLERY_SEEDS: Record<string, string[]> = {
+  gym: ["1534438327429-1f3cb61d6a35","1571902943202-507ec2618e8f","1581009146145-b5ef050c2e1e","1549060279-7e168fcee0c2","1517836357463-d25dfeac3438","1546519638-68e109498ffc"],
+  spor: ["1534438327429-1f3cb61d6a35","1571902943202-507ec2618e8f","1581009146145-b5ef050c2e1e","1549060279-7e168fcee0c2","1517836357463-d25dfeac3438","1546519638-68e109498ffc"],
+  restaurant: ["1414235077428-338989a2e8c0","1555396273-367ea4eb4db5","1466637574441-749b8f19452f","1544025162-d76694265947","1482049016688-2d3e1ae5817","1504674900247-0877df9cc836"],
+  restoran: ["1414235077428-338989a2e8c0","1555396273-367ea4eb4db5","1466637574441-749b8f19452f","1544025162-d76694265947","1482049016688-2d3e1ae5817","1504674900247-0877df9cc836"],
+  barber: ["1503951914875-452162b0f3f1","1521590832167-7bcbfaa6381f","1599351431613-18ef1fdd27e1","1605497788044-5a32c7078486","1503951914875-452162b0f3f1","1521590832167-7bcbfaa6381f"],
+  kuafor: ["1560066984-138dadb4c035","1522337360788-8b13dee7a37e","1599351431613-18ef1fdd27e1","1521590832167-7bcbfaa6381f","1560066984-138dadb4c035","1522337360788-8b13dee7a37e"],
+  default: ["1486406913551-ed72e35db2c2","1497366216548-37526070297c","1560179707-f14e90ef3623","1504384308-abb1890a8ded","1432888498266-38ffec3eaf0a","1497366754035-f200968a2fc5"],
+}
+
+function VideoSec({ s, t }: { s: VideoSection; t: ThemeVars }) {
+  const thumb = `https://images.unsplash.com/photo-${GALLERY_SEEDS.default[0]}?w=1280&q=80&auto=format&fit=crop`
+  return (
+    <section id="video" style={{ padding: "96px 24px", background: t.bgMid }}>
+      <div style={{ maxWidth: 860, margin: "0 auto", textAlign: "center" }}>
+        <h2 className="section-title" style={{ fontSize: "clamp(26px,4vw,38px)", fontWeight: 800, color: t.dark ? "#fff" : "#0f172a", marginBottom: 16 }}>
+          {s.title ?? "Bizi Tanıyın"}
+        </h2>
+        {s.subtitle && (
+          <p className="section-title" data-delay="100" style={{ color: t.textMuted, fontSize: 16, marginBottom: 40 }}>{s.subtitle}</p>
+        )}
+        <div className="reveal" style={{
+          borderRadius: 24, overflow: "hidden", position: "relative",
+          aspectRatio: "16/9", background: "#000",
+          boxShadow: "0 16px 64px rgba(0,0,0,0.4)",
+        }}>
+          {s.youtubeId ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${s.youtubeId}?rel=0`}
+              style={{ width: "100%", height: "100%", border: "none" }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <>
+              <img src={thumb} alt="Video" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.6 }} />
+              <div style={{
+                position: "absolute", inset: 0, display: "flex",
+                alignItems: "center", justifyContent: "center",
+              }}>
+                <div style={{
+                  width: 72, height: 72, borderRadius: "50%",
+                  background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)",
+                  border: "2px solid rgba(255,255,255,0.3)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 28,
+                }}>▶️</div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ComparisonSec({ s, t }: { s: ComparisonSection; t: ThemeVars }) {
+  return (
+    <section id="comparison" style={{ padding: "96px 24px", background: t.bg }}>
+      <div style={{ maxWidth: 760, margin: "0 auto" }}>
+        <h2 className="section-title" style={{ textAlign: "center", fontSize: "clamp(26px,4vw,38px)", fontWeight: 800, color: t.dark ? "#fff" : "#0f172a", marginBottom: 56 }}>
+          {s.title ?? "Neden Bizi Seçmelisiniz?"}
+        </h2>
+        <div className="reveal" style={{
+          background: t.bgCard, border: `1px solid ${t.border}`,
+          borderRadius: 24, overflow: "hidden",
+          boxShadow: t.dark ? "0 4px 32px rgba(0,0,0,0.4)" : "0 4px 32px rgba(0,0,0,0.08)",
+        }}>
+          {/* Header */}
+          <div style={{
+            display: "grid", gridTemplateColumns: "1fr 120px 120px",
+            background: t.bgMid, padding: "16px 24px",
+            borderBottom: `1px solid ${t.border}`,
+          }}>
+            <div style={{ color: t.textMuted, fontSize: 13, fontWeight: 600 }}>Özellik</div>
+            <div style={{ textAlign: "center", color: t.primary, fontWeight: 800, fontSize: 14 }}>{s.us}</div>
+            <div style={{ textAlign: "center", color: t.textMuted, fontWeight: 600, fontSize: 13 }}>{s.them}</div>
+          </div>
+          {s.features.map((f, i) => (
+            <div key={i} style={{
+              display: "grid", gridTemplateColumns: "1fr 120px 120px",
+              padding: "14px 24px",
+              borderBottom: i < s.features.length - 1 ? `1px solid ${t.border}` : "none",
+              background: i % 2 === 0 ? "transparent" : t.dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+            }}>
+              <div style={{ color: t.dark ? "#e2e8f0" : "#1e293b", fontSize: 14, fontWeight: 500 }}>{f.label}</div>
+              <div style={{ textAlign: "center" }}>
+                {f.us === true ? <span style={{ color: t.primary, fontWeight: 700 }}>✓</span>
+                  : f.us === false ? <span style={{ color: "#ef4444" }}>✗</span>
+                    : <span style={{ color: t.primary, fontSize: 12, fontWeight: 600 }}>{f.us}</span>}
+              </div>
+              <div style={{ textAlign: "center" }}>
+                {f.them === true ? <span style={{ color: "#10b981" }}>✓</span>
+                  : f.them === false ? <span style={{ color: "#94a3b8" }}>✗</span>
+                    : <span style={{ color: t.textMuted, fontSize: 12 }}>{f.them}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function LogosSec({ s, t }: { s: LogosSection; t: ThemeVars }) {
+  return (
+    <section id="logos" style={{ padding: "64px 24px", background: t.bgMid, borderTop: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}` }}>
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        <p className="section-title" style={{ textAlign: "center", color: t.textMuted, fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 32 }}>
+          {s.title ?? "Sertifikalar & Üyelikler"}
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", alignItems: "center" }}>
+          {s.items.map((item, i) => (
+            <div key={i} className="reveal-card" data-delay={String(i * 80)} style={{
+              display: "flex", alignItems: "center", gap: 10,
+              background: t.bgCard, border: `1px solid ${t.border}`,
+              borderRadius: 12, padding: "12px 20px",
+              boxShadow: t.dark ? "none" : "0 2px 8px rgba(0,0,0,0.06)",
+            }}>
+              <span style={{ fontSize: 22 }}>{item.icon}</span>
+              <span style={{ fontWeight: 600, fontSize: 14, color: t.dark ? "#e2e8f0" : "#0f172a" }}>{item.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function WaveDivider({ from, to, flip = false }: { from: string; to: string; flip?: boolean }) {
   const path = flip
     ? "M0,0 C360,60 1080,0 1440,0 L1440,0 L0,0 Z"
@@ -717,7 +841,7 @@ function CTABanner({ t, firm }: { t: ThemeVars; firm: FirmRow }) {
   )
 }
 
-function renderSection(section: PageSection, t: ThemeVars, firm: FirmRow) {
+function renderSection(section: PageSection, t: ThemeVars, firm: FirmRow, sector = "") {
   switch (section.type) {
     case "hero":        return <Hero key="hero" s={section} t={t} firm={firm} />
     case "stats":       return <Stats key="stats" s={section} t={t} />
@@ -729,7 +853,11 @@ function renderSection(section: PageSection, t: ThemeVars, firm: FirmRow) {
     case "testimonials":return <Testimonials key="testimonials" s={section} t={t} />
     case "faq":         return <Faq key="faq" s={section} t={t} />
     case "about":       return <About key="about" s={section} t={t} />
-    case "contact":     return <Contact key="contact" firm={firm} t={t} note={section.note} />
+    case "contact":     return <Contact key="contact" firm={firm} t={t} note={(section as any).note} />
+    case "gallery":     return <GallerySec key="gallery" s={section as GallerySection} t={t} sector={sector} />
+    case "video":       return <VideoSec key="video" s={section as VideoSection} t={t} />
+    case "comparison":  return <ComparisonSec key="comparison" s={section as ComparisonSection} t={t} />
+    case "logos":       return <LogosSec key="logos" s={section as LogosSection} t={t} />
     default:            return null
   }
 }
@@ -815,11 +943,50 @@ export default async function DemoPage({ params }: Props) {
   const t = getTheme(blueprint)
 
   const heroSection = blueprint.sections.find(s => s.type === "hero") as HeroSection | undefined
+  const scheduleSection = blueprint.sections.find(s => s.type === "schedule") as import("@/lib/services/ai").ScheduleSection | undefined
   const nonHeroSections = blueprint.sections.filter(s => s.type !== "hero")
   const sliderImages = getSectorImages(firm.category, firm.photoUrl)
+  const navLinks = getNavLinks(blueprint)
+
+  // Open/closed badge
+  let openBadge: string | undefined
+  if (scheduleSection) {
+    const now = new Date()
+    const days = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"]
+    const today = days[now.getDay()]
+    const todayRow = scheduleSection.days.find(d => d.day === today)
+    if (todayRow && todayRow.hours !== "Kapalı" && todayRow.hours.includes("-")) {
+      const [startStr, endStr] = todayRow.hours.split("-").map(s => s.trim())
+      const toMin = (hhmm: string) => { const [h,m] = hhmm.split(":").map(Number); return (h||0)*60+(m||0) }
+      const cur = now.getHours()*60+now.getMinutes()
+      openBadge = cur >= toMin(startStr) && cur < toMin(endStr) ? "🟢 Şu An Açık" : "🔴 Şu An Kapalı"
+    } else if (todayRow?.hours === "Kapalı") {
+      openBadge = "🔴 Bugün Kapalı"
+    }
+  }
+
+  // Fake customer counter (based on firm name hash for consistency)
+  const fakeCount = 1200 + (firm.name.split("").reduce((a: number, c: string) => a + c.charCodeAt(0), 0) % 800)
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: firmRow.name,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: firmRow.address,
+      addressLocality: firmRow.district,
+      addressRegion: firmRow.city,
+      addressCountry: "TR",
+    },
+    ...(firmRow.phone ? { telephone: firmRow.phone } : {}),
+    ...(firmRow.photoUrl ? { image: firmRow.photoUrl } : {}),
+    description: blueprint.meta.description,
+  }
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         html { scroll-behavior: smooth; }
@@ -894,7 +1061,15 @@ export default async function DemoPage({ params }: Props) {
       ` }} />
 
       <div style={{ background: t.bg, color: t.text, minHeight: "100vh" }}>
-        <NavBar firm={firmRow} t={t} bp={blueprint} />
+        <NavBarClient
+          firmName={firmRow.name}
+          phone={firmRow.phone}
+          primary={t.primary}
+          dark={t.dark}
+          border={t.border}
+          textMuted={t.textMuted}
+          navLinks={navLinks}
+        />
 
         {/* Full-screen hero slider */}
         <HeroSlider
@@ -910,21 +1085,72 @@ export default async function DemoPage({ params }: Props) {
           badge={heroSection?.badge}
         />
 
+        {/* Open/closed badge + social links + fake customer counter */}
+        <div style={{
+          background: t.bgMid, borderBottom: `1px solid ${t.border}`,
+          padding: "12px 24px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexWrap: "wrap", gap: 16,
+        }}>
+          {openBadge && (
+            <span style={{
+              fontSize: 13, fontWeight: 700,
+              color: openBadge.startsWith("🟢") ? "#10b981" : "#ef4444",
+            }}>{openBadge}</span>
+          )}
+          {(heroSection as any)?.nearbyBadge && (
+            <span style={{ fontSize: 13, color: t.textMuted, fontWeight: 600 }}>
+              📍 {(heroSection as any).nearbyBadge}
+            </span>
+          )}
+          <span style={{ fontSize: 13, color: t.textMuted }}>
+            👥 <strong style={{ color: t.dark ? "#fff" : "#0f172a" }}>{fakeCount.toLocaleString("tr-TR")}+</strong> mutlu müşteri
+          </span>
+          {(heroSection as any)?.socialLinks && (heroSection as any).socialLinks.length > 0 && (
+            <div style={{ display: "flex", gap: 10 }}>
+              {((heroSection as any).socialLinks as { platform: string; url: string }[]).map((sl, i) => {
+                const icons: Record<string, string> = { instagram: "📸", facebook: "👍", twitter: "🐦", youtube: "▶️", tiktok: "🎵" }
+                return (
+                  <a key={i} href={sl.url} target="_blank" rel="noopener noreferrer" style={{
+                    fontSize: 18, textDecoration: "none",
+                    opacity: 0.8, transition: "opacity 0.2s",
+                  }}>{icons[sl.platform] ?? "🔗"}</a>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
         {/* Rest of sections (no hero, no contact) */}
         {nonHeroSections.filter(s => s.type !== "contact").map((section, i) => (
           <div key={i} className="reveal" data-delay={String(i * 60)}>
-            {renderSection(section, t, firmRow)}
+            {renderSection(section, t, firmRow, firm.category)}
           </div>
         ))}
 
         {/* Mid-page CTA banner */}
         <CTABanner t={t} firm={firmRow} />
 
-        {/* Contact section with map */}
+        {/* Contact section with map + form */}
         {(() => {
           const contactSection = nonHeroSections.find(s => s.type === "contact")
-          return contactSection ? renderSection(contactSection, t, firmRow) : <Contact firm={firmRow} t={t} />
+          return contactSection ? renderSection(contactSection, t, firmRow, firm.category) : <Contact firm={firmRow} t={t} />
         })()}
+
+        {/* Contact form */}
+        <section style={{ padding: "0 24px 80px", background: t.dark ? "#0a1020" : "#f1f5f9" }}>
+          <div style={{ maxWidth: 480, margin: "0 auto" }}>
+            <ContactForm
+              firmId={firm.id}
+              firmName={firmRow.name}
+              primary={t.primary}
+              bgCard={t.bgCard}
+              border={t.border}
+              textMuted={t.textMuted}
+              dark={t.dark}
+            />
+          </div>
+        </section>
 
         <footer style={{
           background: t.dark ? "#080f1a" : "#e8edf5",
@@ -946,6 +1172,11 @@ export default async function DemoPage({ params }: Props) {
             style={{ background: t.primary, boxShadow: `0 4px 24px ${t.primary}60` }}>
             📞
           </a>
+        )}
+
+        {/* Exit intent popup */}
+        {firmRow.phone && (
+          <ExitIntent phone={firmRow.phone} firmName={firmRow.name} primary={t.primary} />
         )}
 
         {/* Demo badge */}

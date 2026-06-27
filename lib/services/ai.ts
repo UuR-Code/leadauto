@@ -10,6 +10,8 @@ export type HeroSection = {
   subtitle: string
   badge?: string
   ctaText: string
+  socialLinks?: { platform: "instagram" | "facebook" | "twitter" | "youtube" | "tiktok"; url: string }[]
+  nearbyBadge?: string
 }
 
 export type StatsSection = {
@@ -71,6 +73,34 @@ export type ContactSection = {
   note?: string
 }
 
+export type GallerySection = {
+  type: "gallery"
+  title?: string
+  keywords: string[]
+}
+
+export type VideoSection = {
+  type: "video"
+  title?: string
+  subtitle?: string
+  youtubeId?: string
+  thumbnailKeyword: string
+}
+
+export type ComparisonSection = {
+  type: "comparison"
+  title?: string
+  us: string
+  them: string
+  features: { label: string; us: boolean | string; them: boolean | string }[]
+}
+
+export type LogosSection = {
+  type: "logos"
+  title?: string
+  items: { name: string; icon: string }[]
+}
+
 export type PageSection =
   | HeroSection
   | StatsSection
@@ -83,6 +113,10 @@ export type PageSection =
   | FaqSection
   | AboutSection
   | ContactSection
+  | GallerySection
+  | VideoSection
+  | ComparisonSection
+  | LogosSection
 
 export type PageBlueprint = {
   theme: {
@@ -94,11 +128,10 @@ export type PageBlueprint = {
   meta: {
     title: string
     description: string
+    keywords: string[]
   }
   sections: PageSection[]
 }
-
-// ─── Legacy type kept for reference ──────────────────────────────────────────
 
 export type LandingPageContent = {
   heroTitle: string
@@ -139,37 +172,49 @@ GÖREVİN:
 
 KULLANILABİLECEK BÖLÜMLER (sadece uygun olanları seç):
 
-"hero" — Zorunlu. Ana başlık ve çağrı.
-Schema: { "type": "hero", "title": "güçlü başlık (max 8 kelime)", "subtitle": "2 cümle açıklama", "badge": "rozet (ör: '5 Yıldız Google Puanı', 'ISO Belgeli') veya omit", "ctaText": "buton metni" }
+"hero" — Zorunlu.
+Schema: { "type": "hero", "title": "güçlü başlık (max 8 kelime)", "subtitle": "2 cümle", "badge": "rozet veya omit", "ctaText": "buton metni", "socialLinks": [{"platform": "instagram", "url": "https://instagram.com/[kullaniciadi]"}], "nearbyBadge": "${district}'nın En İyi [sektör ismi]" }
 
-"stats" — Rakamlarla güven. Ör: yıl deneyim, müşteri sayısı, memnuniyet oranı.
+"stats" — Rakamlarla güven.
 Schema: { "type": "stats", "items": [{ "value": "10+", "label": "Yıl Deneyim" }] }
 
-"services" — Hizmet/ürün kartları. Her karta ikon emojisi ekle.
-Schema: { "type": "services", "title": "bölüm başlığı", "items": [{ "name": "...", "desc": "2 cümle", "icon": "🔧", "price": "fiyat veya omit" }] }
+"services" — Hizmet kartları, ikon emojisi ekle.
+Schema: { "type": "services", "title": "...", "items": [{ "name": "...", "desc": "2 cümle", "icon": "🔧", "price": "veya omit" }] }
 
-"menu" — Sadece yiyecek/içecek işletmeleri için. Gerçekçi fiyatlar yaz.
-Schema: { "type": "menu", "title": "...", "categories": [{ "name": "kategori", "items": [{ "name": "ürün", "price": "₺XX", "desc": "kısa açıklama veya omit" }] }] }
+"menu" — Sadece yiyecek/içecek.
+Schema: { "type": "menu", "title": "...", "categories": [{ "name": "kategori", "items": [{ "name": "ürün", "price": "₺XX", "desc": "veya omit" }] }] }
 
-"pricing" — Üyelik, paket, abonelik satan işletmeler için.
-Schema: { "type": "pricing", "title": "...", "plans": [{ "name": "...", "price": "₺XX", "period": "aylık/yıllık/seans", "features": ["özellik1", "özellik2"], "highlighted": true/false }] }
+"pricing" — Paket/abonelik satan işletmeler.
+Schema: { "type": "pricing", "title": "...", "plans": [{ "name": "...", "price": "₺XX", "period": "aylık", "features": ["özellik"], "highlighted": false }] }
 
-"schedule" — Spor salonu, kurs, klinik için ders/seans programı VEYA çalışma saatleri.
+"schedule" — Spor/kurs/klinik için program veya çalışma saatleri.
 Schema: { "type": "schedule", "title": "...", "days": [{ "day": "Pazartesi", "hours": "09:00 - 20:00" }] }
 
-"team" — Uzmanlık önemli olan sektörler için (klinik, danışmanlık, hukuk, güzellik).
-Schema: { "type": "team", "title": "...", "members": [{ "name": "Ad Soyad", "role": "Unvan", "highlight": "uzmanlık notu" }] }
+"team" — Uzmanlık önemli sektörler için.
+Schema: { "type": "team", "title": "...", "members": [{ "name": "Ad Soyad", "role": "Unvan", "highlight": "not" }] }
 
-"testimonials" — Müşteri yorumları (gerçekçi, sektöre özel, 3 adet).
+"testimonials" — 3 gerçekçi müşteri yorumu.
 Schema: { "type": "testimonials", "title": "...", "items": [{ "text": "yorum", "author": "Ad S.", "rating": 5 }] }
 
-"faq" — Sık sorulan sorular (bu sektörde insanların gerçekten sorduğu şeyler).
+"faq" — Sektöre gerçekten sorulan sorular.
 Schema: { "type": "faq", "title": "...", "items": [{ "question": "...", "answer": "..." }] }
 
-"about" — Kısa tanıtım ve öne çıkan özellikler.
-Schema: { "type": "about", "title": "...", "text": "2-3 cümle", "highlights": ["Sertifikalı", "Güvenilir", "Hızlı Servis"] }
+"about" — Kısa tanıtım.
+Schema: { "type": "about", "title": "...", "text": "2-3 cümle", "highlights": ["Sertifikalı", "Güvenilir"] }
 
-"contact" — Zorunlu, en sona koy.
+"gallery" — Fotoğraf galerisi. İngilizce arama anahtar kelimeleri gir (Unsplash için).
+Schema: { "type": "gallery", "title": "Galeri", "keywords": ["gym interior", "workout equipment", "fitness class"] }
+
+"video" — Tanıtım video bölümü.
+Schema: { "type": "video", "title": "Bizi Tanıyın", "subtitle": "2 cümle", "thumbnailKeyword": "gym workout" }
+
+"comparison" — Neden biz? Rakip karşılaştırma tablosu.
+Schema: { "type": "comparison", "title": "Neden Bizi Seçmelisiniz?", "us": "${firmName}", "them": "Diğer Firmalar", "features": [{ "label": "Sertifikalı Uzman Kadro", "us": true, "them": false }, { "label": "7/24 Destek", "us": true, "them": "Sınırlı" }] }
+
+"logos" — Referans markalar, sertifikalar, üyeolunan dernekler.
+Schema: { "type": "logos", "title": "Sertifikalar & Üyelikler", "items": [{ "name": "ISO 9001", "icon": "🏆" }] }
+
+"contact" — Zorunlu, en sona.
 Schema: { "type": "contact", "note": "ek bilgi veya omit" }
 
 SADECE geçerli JSON döndür. Markdown, açıklama, kod bloğu yok:
@@ -182,7 +227,8 @@ SADECE geçerli JSON döndür. Markdown, açıklama, kod bloğu yok:
   },
   "meta": {
     "title": "SEO başlık (max 60 karakter)",
-    "description": "meta açıklama (max 155 karakter)"
+    "description": "meta açıklama (max 155 karakter)",
+    "keywords": ["anahtar kelime1", "anahtar kelime2"]
   },
   "sections": [ ...bölümler... ]
 }`
