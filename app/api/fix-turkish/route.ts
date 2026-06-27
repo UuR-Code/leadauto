@@ -27,15 +27,32 @@ function fixField(val: string): string {
   return DISTRICT_MAP[lower] ?? DISTRICT_MAP[val] ?? val
 }
 
-// Generic: replace '?' followed by known Turkish syllables
+const REPL = "�"  // Unicode replacement character (stored when encoding fails)
+const Q = "\\?"
+
+// Generic: replace U+FFFD or '?' with correct Turkish chars using context
 function fixGeneric(val: string): string {
   return val
-    .replace(/\?(?=[aeiouAEIOU])/g, "Ç")  // ?a → Ça etc (heuristic)
-    .replace(/([Kk])ad\?([Kk])\?y/g, "Kadıköy")
-    .replace(/([Bb])e\?ikta\?/g, "Beşiktaş")
-    .replace(/([ÇC])ankaya/gi, "Çankaya")
+    // U+FFFD variants
+    .replace(new RegExp(`${REPL}ankaya`, "gi"), "Çankaya")
+    .replace(new RegExp(`${REPL}stanbul`, "gi"), "İstanbul")
+    .replace(new RegExp(`Kad${REPL}k${REPL}y`, "gi"), "Kadıköy")
+    .replace(new RegExp(`Kad${REPL}köy`, "gi"), "Kadıköy")
+    .replace(new RegExp(`Be${REPL}ikta${REPL}`, "gi"), "Beşiktaş")
+    .replace(new RegExp(`Ba${REPL}ak${REPL}ehir`, "gi"), "Başakşehir")
+    .replace(new RegExp(`${REPL}i${REPL}li`, "gi"), "Şişli")
+    .replace(new RegExp(`${REPL}sk${REPL}dar`, "gi"), "Üsküdar")
+    .replace(new RegExp(`Bey${REPL}lu`, "gi"), "Beyoğlu")
+    .replace(new RegExp(`G${REPL}ng${REPL}ren`, "gi"), "Güngören")
+    .replace(new RegExp(`K${REPL}${REPL}${REPL}kçekmece`, "gi"), "Küçükçekmece")
+    .replace(new RegExp(`Ba${REPL}c${REPL}lar`, "gi"), "Bağcılar")
+    .replace(new RegExp(`G${REPL}ztepe`, "gi"), "Göztepe")
+    .replace(new RegExp(`${REPL}zmir`, "gi"), "İzmir")
+    .replace(new RegExp(`Bursa`, "gi"), "Bursa")
+    // literal '?' variants
     .replace(/\?ankaya/gi, "Çankaya")
     .replace(/\?stanbul/gi, "İstanbul")
+    .replace(/Kad\?k\?y/gi, "Kadıköy")
 }
 
 export async function POST() {
