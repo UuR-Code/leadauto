@@ -16,6 +16,7 @@ import type {
   AboutSection,
 } from "@/lib/services/ai"
 import { HeroSlider } from "./HeroSlider"
+import { FloatingCTA } from "./FloatingCTA"
 
 // ─── Sector image library (Unsplash stable photo IDs) ────────────────────────
 
@@ -368,11 +369,13 @@ function Pricing({ s, t }: { s: PricingSection; t: ThemeVars }) {
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(240px, 1fr))`, gap: 24 }}>
           {s.plans.map((plan, i) => (
-            <div key={i} style={{
+            <div key={i} className={`reveal-card ${plan.highlighted ? "shimmer-card" : ""}`} data-delay={String(i * 100)} style={{
               background: plan.highlighted ? t.primary : t.bgCard,
               border: `2px solid ${plan.highlighted ? t.primary : t.border}`,
               borderRadius: 24, padding: 32, textAlign: "center",
-              boxShadow: plan.highlighted ? `0 8px 40px ${t.primary}40` : t.dark ? "none" : "0 2px 16px rgba(0,0,0,0.06)",
+              boxShadow: plan.highlighted ? `0 12px 48px ${t.primary}50` : t.dark ? "0 4px 24px rgba(0,0,0,0.3)" : "0 4px 24px rgba(0,0,0,0.06)",
+              position: "relative", overflow: "hidden",
+              transform: plan.highlighted ? "scale(1.04)" : "scale(1)",
             }}>
               <div style={{ fontWeight: 700, fontSize: 16, color: plan.highlighted ? "#fff" : t.dark ? "#fff" : "#0f172a", marginBottom: 8 }}>{plan.name}</div>
               <div style={{ fontSize: 40, fontWeight: 900, color: plan.highlighted ? "#fff" : t.primary, lineHeight: 1, marginBottom: 4 }}>{plan.price}</div>
@@ -545,60 +548,172 @@ function About({ s, t }: { s: AboutSection; t: ThemeVars }) {
 }
 
 function Contact({ firm, t, note }: { firm: FirmRow; t: ThemeVars; note?: string }) {
+  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(firm.address + " " + firm.city)}&output=embed&hl=tr&z=16`
   return (
-    <section id="contact" style={{ padding: "80px 24px", background: t.dark ? "#0a1020" : "#f1f5f9" }}>
-      <div style={{ maxWidth: 760, margin: "0 auto" }}>
-        <h2 style={{ textAlign: "center", fontSize: 32, fontWeight: 800, color: t.dark ? "#fff" : "#0f172a", marginBottom: 40 }}>
-          İletişim
+    <section id="contact" style={{ padding: "96px 24px 0", background: t.dark ? "#0a1020" : "#f1f5f9" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <h2 className="section-title" style={{ textAlign: "center", fontSize: "clamp(26px,4vw,38px)", fontWeight: 800, color: t.dark ? "#fff" : "#0f172a", marginBottom: 56 }}>
+          Bize Ulaşın
         </h2>
-        <div style={{
-          background: t.bgCard, border: `1px solid ${t.border}`,
-          borderRadius: 24, padding: 36,
-          boxShadow: t.dark ? "none" : "0 4px 24px rgba(0,0,0,0.08)",
-        }}>
-          <div style={{ display: "grid", gap: 20 }}>
+
+        {/* Two-column: info + map */}
+        <div className="contact-grid" style={{ display: "flex", gap: 24, alignItems: "stretch", marginBottom: 0 }}>
+
+          {/* Info card */}
+          <div className="reveal" style={{
+            flex: "0 0 340px",
+            background: t.bgCard, border: `1px solid ${t.border}`,
+            borderRadius: 24, padding: 36,
+            boxShadow: t.dark ? "0 4px 32px rgba(0,0,0,0.4)" : "0 4px 32px rgba(0,0,0,0.08)",
+            display: "flex", flexDirection: "column", gap: 24,
+          }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-              <div style={{ fontSize: 24, flexShrink: 0 }}>📍</div>
+              <div style={{
+                width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                background: `${t.primary}20`, display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: 22,
+              }}>📍</div>
               <div>
-                <div style={{ fontWeight: 600, color: t.dark ? "#fff" : "#0f172a", marginBottom: 2 }}>Adres</div>
-                <div style={{ color: t.textMuted, fontSize: 15 }}>{firm.address}</div>
+                <div style={{ fontWeight: 700, color: t.dark ? "#fff" : "#0f172a", marginBottom: 4, fontSize: 15 }}>Adres</div>
+                <div style={{ color: t.textMuted, fontSize: 14, lineHeight: 1.6 }}>{firm.address}</div>
+                <div style={{ color: t.textMuted, fontSize: 13, marginTop: 4 }}>{firm.district}, {firm.city}</div>
               </div>
             </div>
+
             {firm.phone && (
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <div style={{ fontSize: 24, flexShrink: 0 }}>📞</div>
+                <div style={{
+                  width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                  background: `${t.primary}20`, display: "flex",
+                  alignItems: "center", justifyContent: "center", fontSize: 22,
+                }}>📞</div>
                 <div>
-                  <div style={{ fontWeight: 600, color: t.dark ? "#fff" : "#0f172a", marginBottom: 2 }}>Telefon</div>
-                  <a href={`tel:${firm.phone}`} style={{ color: t.primary, fontSize: 15, textDecoration: "none", fontWeight: 600 }}>{firm.phone}</a>
+                  <div style={{ fontWeight: 700, color: t.dark ? "#fff" : "#0f172a", marginBottom: 4, fontSize: 15 }}>Telefon</div>
+                  <a href={`tel:${firm.phone}`} style={{ color: t.primary, fontSize: 16, textDecoration: "none", fontWeight: 700 }}>{firm.phone}</a>
                 </div>
               </div>
             )}
+
             {note && (
               <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-                <div style={{ fontSize: 24, flexShrink: 0 }}>ℹ️</div>
-                <div style={{ color: t.textMuted, fontSize: 15 }}>{note}</div>
+                <div style={{
+                  width: 48, height: 48, borderRadius: 14, flexShrink: 0,
+                  background: `${t.primary}20`, display: "flex",
+                  alignItems: "center", justifyContent: "center", fontSize: 22,
+                }}>ℹ️</div>
+                <div style={{ color: t.textMuted, fontSize: 14, lineHeight: 1.6 }}>{note}</div>
+              </div>
+            )}
+
+            {firm.phone && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: "auto" }}>
+                <a href={`tel:${firm.phone}`} style={{
+                  background: t.primary, color: "#fff",
+                  padding: "14px 20px", borderRadius: 12,
+                  fontWeight: 800, fontSize: 15, textDecoration: "none",
+                  textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  boxShadow: `0 4px 20px ${t.primary}50`,
+                }}>📞 Hemen Ara</a>
+                <a href={`https://wa.me/${firm.phone.replace(/\D/g, "")}`} style={{
+                  background: "#25D366", color: "#fff",
+                  padding: "14px 20px", borderRadius: 12,
+                  fontWeight: 800, fontSize: 15, textDecoration: "none",
+                  textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                }}>💬 WhatsApp ile Yaz</a>
               </div>
             )}
           </div>
+
+          {/* Map */}
+          <div className="reveal map-container" data-delay="150" style={{
+            flex: 1, minHeight: 420, borderRadius: 24, overflow: "hidden",
+            border: `1px solid ${t.border}`,
+            boxShadow: t.dark ? "0 4px 32px rgba(0,0,0,0.4)" : "0 4px 32px rgba(0,0,0,0.08)",
+          }}>
+            <iframe
+              className="map-iframe"
+              src={mapSrc}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Konum"
+              style={{ filter: t.dark ? "invert(90%) hue-rotate(180deg)" : "none" }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom wave into footer */}
+      <div style={{ marginTop: 80 }}>
+        <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" style={{ display: "block" }} preserveAspectRatio="none">
+          <path d={`M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z`} fill={t.dark ? "#080f1a" : "#e8edf5"} />
+        </svg>
+      </div>
+    </section>
+  )
+}
+
+function WaveDivider({ from, to, flip = false }: { from: string; to: string; flip?: boolean }) {
+  const path = flip
+    ? "M0,0 C360,60 1080,0 1440,0 L1440,0 L0,0 Z"
+    : "M0,60 C360,0 1080,60 1440,0 L1440,60 L0,60 Z"
+  return (
+    <div style={{ background: from, lineHeight: 0, marginBottom: -1 }}>
+      <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", width: "100%" }} preserveAspectRatio="none">
+        <path d={path} fill={to} />
+      </svg>
+    </div>
+  )
+}
+
+function CTABanner({ t, firm }: { t: ThemeVars; firm: FirmRow }) {
+  return (
+    <>
+      <WaveDivider from={t.bg} to={t.primary} />
+      <section style={{
+        background: `linear-gradient(135deg, ${t.primary} 0%, ${t.accent ?? t.primary}cc 100%)`,
+        padding: "80px 24px", textAlign: "center",
+      }}>
+        <div style={{ maxWidth: 680, margin: "0 auto" }}>
+          <div className="section-title" style={{
+            display: "inline-block",
+            background: "rgba(255,255,255,0.15)", color: "#fff",
+            padding: "6px 20px", borderRadius: 999,
+            fontSize: 13, fontWeight: 600, marginBottom: 24, letterSpacing: "0.05em",
+          }}>✦ Hemen Harekete Geçin</div>
+          <h2 className="section-title" data-delay="100" style={{
+            fontSize: "clamp(28px,4.5vw,48px)", fontWeight: 900, color: "#fff",
+            marginBottom: 16, lineHeight: 1.12, letterSpacing: "-0.02em",
+          }}>
+            Bugün Başlayın, Farkı Hissedin
+          </h2>
+          <p className="section-title" data-delay="150" style={{
+            fontSize: 18, color: "rgba(255,255,255,0.85)",
+            marginBottom: 40, lineHeight: 1.7,
+          }}>
+            Profesyonel hizmet ve kaliteli deneyim için bizi arayın. İlk görüşme ücretsiz.
+          </p>
           {firm.phone && (
-            <div style={{ display: "flex", gap: 12, marginTop: 28, flexWrap: "wrap" }}>
+            <div className="reveal" data-delay="200" style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
               <a href={`tel:${firm.phone}`} style={{
-                flex: 1, background: t.primary, color: "#fff",
-                padding: "13px 20px", borderRadius: 12,
-                fontWeight: 700, fontSize: 15, textDecoration: "none",
-                textAlign: "center", minWidth: 140,
-              }}>📞 Hemen Ara</a>
+                background: "#fff", color: t.primary,
+                padding: "16px 40px", borderRadius: 14,
+                fontWeight: 800, fontSize: 16, textDecoration: "none",
+                display: "inline-flex", alignItems: "center", gap: 10,
+                boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+              }}>📞 {firm.phone}</a>
               <a href={`https://wa.me/${firm.phone.replace(/\D/g, "")}`} style={{
-                flex: 1, background: "#25D366", color: "#fff",
-                padding: "13px 20px", borderRadius: 12,
-                fontWeight: 700, fontSize: 15, textDecoration: "none",
-                textAlign: "center", minWidth: 140,
+                background: "#25D366", color: "#fff",
+                padding: "16px 40px", borderRadius: 14,
+                fontWeight: 800, fontSize: 16, textDecoration: "none",
+                display: "inline-flex", alignItems: "center", gap: 10,
+                boxShadow: "0 8px 24px rgba(37,211,102,0.4)",
               }}>💬 WhatsApp</a>
             </div>
           )}
         </div>
-      </div>
-    </section>
+      </section>
+      <WaveDivider from={t.primary} to={t.dark ? "#0a1020" : "#f1f5f9"} flip />
+    </>
   )
 }
 
@@ -721,16 +836,36 @@ export default async function DemoPage({ params }: Props) {
           to   { opacity: 1; }
         }
         .reveal { opacity: 0; }
-        .reveal.visible {
-          animation: fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
-        }
+        .reveal.visible { animation: fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards; }
         .reveal-card { opacity: 0; }
-        .reveal-card.visible {
-          animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
-        }
+        .reveal-card.visible { animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
         .section-title { opacity: 0; }
-        .section-title.visible {
-          animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
+        .section-title.visible { animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
+        @keyframes shimmer {
+          0% { background-position: -400px 0; }
+          100% { background-position: 400px 0; }
+        }
+        .shimmer-card::after {
+          content: '';
+          position: absolute; inset: 0; border-radius: inherit;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+          background-size: 400px 100%;
+          animation: shimmer 2.5s infinite linear;
+          pointer-events: none;
+        }
+        .phone-fab {
+          position: fixed; bottom: 96px; right: 20px; z-index: 150;
+          width: 56px; height: 56px; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 22px; text-decoration: none; color: #fff;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .phone-fab:hover { transform: scale(1.12); }
+        .map-iframe { border: 0; width: 100%; height: 100%; }
+        @media (max-width: 768px) {
+          .contact-grid { flex-direction: column !important; }
+          .map-container { height: 240px !important; }
         }
       `}</style>
 
@@ -775,20 +910,47 @@ export default async function DemoPage({ params }: Props) {
           badge={heroSection?.badge}
         />
 
-        {/* Rest of sections (no hero) */}
-        {nonHeroSections.map((section, i) => (
+        {/* Rest of sections (no hero, no contact) */}
+        {nonHeroSections.filter(s => s.type !== "contact").map((section, i) => (
           <div key={i} className="reveal" data-delay={String(i * 60)}>
             {renderSection(section, t, firmRow)}
           </div>
         ))}
 
-        <footer style={{ background: t.dark ? "#080f1a" : "#f1f5f9", borderTop: `1px solid ${t.border}`, padding: "32px 24px", textAlign: "center" }}>
-          <div style={{ color: t.textMuted, fontSize: 13 }}>{blueprint.meta.title}</div>
-          <div style={{ color: t.border, fontSize: 12, marginTop: 6 }}>Bu site demo amaçlıdır.</div>
+        {/* Mid-page CTA banner */}
+        <CTABanner t={t} firm={firmRow} />
+
+        {/* Contact section with map */}
+        {(() => {
+          const contactSection = nonHeroSections.find(s => s.type === "contact")
+          return contactSection ? renderSection(contactSection, t, firmRow) : <Contact firm={firmRow} t={t} />
+        })()}
+
+        <footer style={{
+          background: t.dark ? "#080f1a" : "#e8edf5",
+          padding: "32px 24px", textAlign: "center",
+        }}>
+          <div style={{ color: t.dark ? "#fff" : "#0f172a", fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{firmRow.name}</div>
+          <div style={{ color: t.textMuted, fontSize: 13 }}>{blueprint.meta.description}</div>
+          <div style={{ color: t.border, fontSize: 12, marginTop: 10 }}>Bu site demo amaçlıdır.</div>
         </footer>
 
-        <div style={{ position: "fixed", bottom: 16, right: 16, fontSize: 12, padding: "6px 14px", borderRadius: 999, background: t.bgCard, border: `1px solid ${t.border}`, color: t.textMuted, zIndex: 50 }}>
-          Demo Site
+        {/* Floating bottom CTA bar */}
+        {firmRow.phone && (
+          <FloatingCTA phone={firmRow.phone} primary={t.primary} firmName={firmRow.name} />
+        )}
+
+        {/* Sticky round phone button */}
+        {firmRow.phone && (
+          <a href={`tel:${firmRow.phone}`} className="phone-fab"
+            style={{ background: t.primary, boxShadow: `0 4px 24px ${t.primary}60` }}>
+            📞
+          </a>
+        )}
+
+        {/* Demo badge */}
+        <div style={{ position: "fixed", top: 80, right: 12, fontSize: 11, padding: "4px 10px", borderRadius: 999, background: t.bgCard, border: `1px solid ${t.border}`, color: t.textMuted, zIndex: 50, opacity: 0.8 }}>
+          Demo
         </div>
       </div>
     </>
