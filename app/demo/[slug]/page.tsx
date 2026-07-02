@@ -912,6 +912,8 @@ export default async function DemoPage({ params }: Props) {
 
   if (!firm || !firm.landingPage) notFound()
 
+  await prisma.firm.update({ where: { id: firm.id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
+
   const lp = firm.landingPage
   const blueprint = lp.blueprint as PageBlueprint | null
 

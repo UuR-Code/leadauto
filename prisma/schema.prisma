@@ -30,35 +30,38 @@ enum CampaignStatus {
 }
 
 model Firm {
-  id          String     @id @default(cuid())
-  campaignId  String
-  campaign    Campaign   @relation(fields: [campaignId], references: [id])
-  name        String
-  address     String
-  phone       String?
-  email       String?
-  category    String
-  city        String
-  district    String
-  lat         Float?
-  lng         Float?
-  placeId     String?    @unique
-  photoUrl    String?
-  status      FirmStatus @default(SCRAPED)
-  demoUrl     String?
-  demoSlug    String?    @unique
-  deployedAt  DateTime?
-  emailSentAt DateTime?
-  repliedAt   DateTime?
-  replyText   String?    @db.Text
-  meetingAt   DateTime?
-  meetingNote String?    @db.Text
-  closedAt    DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id            String     @id @default(cuid())
+  campaignId    String
+  campaign      Campaign   @relation(fields: [campaignId], references: [id])
+  name          String
+  address       String
+  phone         String?
+  email         String?
+  category      String
+  city          String
+  district      String
+  lat           Float?
+  lng           Float?
+  placeId       String?    @unique
+  photoUrl      String?
+  status        FirmStatus @default(SCRAPED)
+  demoUrl       String?
+  demoSlug      String?    @unique
+  viewCount     Int        @default(0)
+  deployedAt    DateTime?
+  emailSentAt   DateTime?
+  followupSentAt DateTime?
+  repliedAt     DateTime?
+  replyText     String?    @db.Text
+  meetingAt     DateTime?
+  meetingNote   String?    @db.Text
+  closedAt      DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   landingPage LandingPage?
   emails      EmailLog[]
+  leads       Lead[]
 }
 
 enum FirmStatus {
@@ -108,4 +111,21 @@ enum EmailStatus {
   FAILED
   OPENED
   CLICKED
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  firmId    String
+  firm      Firm     @relation(fields: [firmId], references: [id])
+  name      String
+  phone     String
+  message   String?  @db.Text
+  createdAt DateTime @default(now())
+}
+
+model Suppression {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  reason    String?
+  createdAt DateTime @default(now())
 }

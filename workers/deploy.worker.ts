@@ -2,7 +2,7 @@ import { Worker } from "bullmq"
 import Redis from "ioredis"
 const redis = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", { maxRetriesPerRequest: null })
 import { prisma } from "@/lib/prisma"
-import { emailQueue, type DeployJobData } from "@/lib/queue/queues"
+import { emailQueue, whatsappQueue, type DeployJobData } from "@/lib/queue/queues"
 
 export const deployWorker = new Worker<DeployJobData>(
   "deploy",
@@ -11,7 +11,7 @@ export const deployWorker = new Worker<DeployJobData>(
 
     const firm = await prisma.firm.findUniqueOrThrow({
       where: { id: firmId },
-      include: { landingPage: true },
+      include: { landingPage: true, campaign: { select: { channel: true } } },
     })
 
     // For path-based routing, the demo URL is just our app's route
@@ -27,9 +27,12 @@ export const deployWorker = new Worker<DeployJobData>(
       },
     })
 
-    // Only queue email if firm has an email address
-    if (firm.email) {
+    const channel = firm.campaign.channel
+    if ((channel === "email" || channel === "both") && firm.email) {
       await emailQueue.add("email", { firmId }, { attempts: 3, backoff: { type: "exponential", delay: 5000 } })
+    }
+    if ((channel === "whatsapp" || channel === "both") && firm.phone) {
+      await whatsappQueue.add("whatsapp", { firmId }, { attempts: 3, backoff: { type: "exponential", delay: 5000 } })
     }
 
     await redis.publish(

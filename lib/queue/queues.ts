@@ -7,6 +7,7 @@ let _scrapeQueue: Queue | null = null
 let _buildPageQueue: Queue | null = null
 let _deployQueue: Queue | null = null
 let _emailQueue: Queue | null = null
+let _whatsappQueue: Queue | null = null
 
 export function getScrapeQueue() {
   return (_scrapeQueue ??= new Queue("scrape", { connection }))
@@ -20,12 +21,16 @@ export function getDeployQueue() {
 export function getEmailQueue() {
   return (_emailQueue ??= new Queue("email", { connection }))
 }
+export function getWhatsappQueue() {
+  return (_whatsappQueue ??= new Queue("whatsapp", { connection }))
+}
 
 // Keep named exports for workers (they import at runtime, not build time)
 export const scrapeQueue = { add: (...args: Parameters<Queue["add"]>) => getScrapeQueue().add(...args) }
 export const buildPageQueue = { add: (...args: Parameters<Queue["add"]>) => getBuildPageQueue().add(...args) }
 export const deployQueue = { add: (...args: Parameters<Queue["add"]>) => getDeployQueue().add(...args) }
 export const emailQueue = { add: (...args: Parameters<Queue["add"]>) => getEmailQueue().add(...args) }
+export const whatsappQueue = { add: (...args: Parameters<Queue["add"]>) => getWhatsappQueue().add(...args) }
 
 export type ScrapeJobData = {
   campaignId: string
@@ -39,3 +44,4 @@ export type ScrapeJobData = {
 export type BuildPageJobData = { firmId: string }
 export type DeployJobData = { firmId: string }
 export type EmailJobData = { firmId: string }
+export type WhatsappJobData = { firmId: string }

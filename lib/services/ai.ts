@@ -133,15 +133,6 @@ export type PageBlueprint = {
   sections: PageSection[]
 }
 
-export type LandingPageContent = {
-  heroTitle: string
-  heroSub: string
-  services: { name: string; description: string }[]
-  aboutText: string
-  ctaText: string
-  colorPrimary: string
-}
-
 // ─── Blueprint generator ──────────────────────────────────────────────────────
 
 export async function generatePageBlueprint(params: {

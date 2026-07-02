@@ -6,8 +6,13 @@ export function middleware(request: NextRequest) {
   const secret = process.env.NEXTAUTH_SECRET || "lead-auto-auth"
   const isLoggedIn = token === secret
 
-  if (request.nextUrl.pathname.startsWith("/dashboard")) {
-    if (!isLoggedIn) return NextResponse.redirect(new URL("/login", request.url))
+  const protectedPaths = ["/dashboard", "/campaigns", "/firms", "/leads", "/sites", "/suppressions"]
+  const isProtected = protectedPaths.some(
+    (p) => request.nextUrl.pathname === p || request.nextUrl.pathname.startsWith(`${p}/`),
+  )
+
+  if (isProtected && !isLoggedIn) {
+    return NextResponse.redirect(new URL("/login", request.url))
   }
 
   if (request.nextUrl.pathname === "/login" && isLoggedIn) {
@@ -18,5 +23,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login"],
+  matcher: ["/((?!api|_next|demo|unsubscribe|favicon.ico).*)"],
 }

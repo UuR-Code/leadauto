@@ -78,7 +78,7 @@ export default async function FirmsPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b" style={{ borderColor: "#1e2d45" }}>
-                {["Firma", "Sektör / Şehir", "Email", "Durum", "Demo", "Tarih"].map((h) => (
+                {["Firma", "Sektör / Şehir", "Email", "Durum", "Demo", "Görüntülenme", "Tarih"].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-[11px] uppercase tracking-wider font-medium"
                     style={{ color: "#4a5568" }}>{h}</th>
                 ))}
@@ -108,6 +108,9 @@ export default async function FirmsPage({
                         <a href={f.demoUrl} target="_blank" rel="noopener"
                           className="text-blue-400 text-xs hover:underline">Görüntüle ↗</a>
                       ) : <span style={{ color: "#4a5568" }}>—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-xs" style={{ color: "#94a3b8" }}>
+                      👁 {f.viewCount}
                     </td>
                     <td className="px-4 py-3 text-xs" style={{ color: "#4a5568" }}>
                       {new Date(f.createdAt).toLocaleDateString("tr-TR")}

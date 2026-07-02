@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { isAuthenticated } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
 const statements = [
@@ -60,6 +61,22 @@ const statements = [
   )`,
   `ALTER TABLE "LandingPage" ADD COLUMN IF NOT EXISTS "blueprint" JSONB`,
   `ALTER TABLE "Campaign" ADD COLUMN IF NOT EXISTS "requireNoWebsite" BOOLEAN NOT NULL DEFAULT true`,
+  `ALTER TABLE "Firm" ADD COLUMN IF NOT EXISTS "viewCount" INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE "Firm" ADD COLUMN IF NOT EXISTS "followupSentAt" TIMESTAMP(3)`,
+  `CREATE TABLE IF NOT EXISTS "Lead" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "firmId" TEXT NOT NULL REFERENCES "Firm"("id"),
+    "name" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "message" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS "Suppression" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "email" TEXT NOT NULL UNIQUE,
+    "reason" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
   `CREATE TABLE IF NOT EXISTS "EmailLog" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "firmId" TEXT NOT NULL REFERENCES "Firm"("id"),
@@ -76,6 +93,7 @@ const statements = [
 ]
 
 export async function POST() {
+  if (!await isAuthenticated()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const results: string[] = []
   for (const sql of statements) {
     try {

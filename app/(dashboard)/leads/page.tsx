@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import type { Lead } from "@prisma/client"
 import Link from "next/link"
 
 export const dynamic = "force-dynamic"
@@ -12,6 +13,7 @@ export default async function LeadsPage() {
       include: {
         campaign: { select: { name: true, sector: true } },
         emails: { orderBy: { createdAt: "desc" }, take: 1 },
+        leads: { orderBy: { createdAt: "desc" }, take: 3 },
       },
     })
   } catch (e) {
@@ -90,6 +92,24 @@ export default async function LeadsPage() {
                   <div className="mt-3 p-3 rounded-lg text-xs italic"
                     style={{ background: "#0f1117", color: "#94a3b8" }}>
                     "{f.replyText.slice(0, 200)}{f.replyText.length > 200 ? "…" : ""}"
+                  </div>
+                )}
+
+                {f.leads?.length > 0 && (
+                  <div className="mt-3 space-y-1.5">
+                    {f.leads.map((lead: Lead) => (
+                      <div key={lead.id} className="p-2.5 rounded-lg text-xs flex items-start justify-between gap-2"
+                        style={{ background: "#0f1117" }}>
+                        <div>
+                          <span className="font-medium text-slate-200">{lead.name}</span>
+                          <span className="ml-2" style={{ color: "#64748b" }}>{lead.phone}</span>
+                          {lead.message && <div className="mt-1" style={{ color: "#94a3b8" }}>{lead.message}</div>}
+                        </div>
+                        <span className="whitespace-nowrap" style={{ color: "#4a5568" }}>
+                          {new Date(lead.createdAt).toLocaleDateString("tr-TR")}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
 

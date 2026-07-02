@@ -32,7 +32,7 @@ export default function FirmsTable({ firms }: { firms: FirmWithCampaign[] }) {
         <table className="w-full">
           <thead>
             <tr style={{ borderBottom: "1px solid #1e2d45" }}>
-              {["Firma", "Durum", "Demo", "Tarih"].map((h) => (
+              {["Firma", "Durum", "Demo", "Görüntülenme", "Tarih"].map((h) => (
                 <th key={h} className="px-4 py-2.5 text-left text-[10px] uppercase tracking-wider font-medium" style={{ color: "#4a5568" }}>
                   {h}
                 </th>
@@ -42,7 +42,7 @@ export default function FirmsTable({ firms }: { firms: FirmWithCampaign[] }) {
           <tbody>
             {firms.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-sm" style={{ color: "#4a5568" }}>
+                <td colSpan={5} className="px-4 py-8 text-center text-sm" style={{ color: "#4a5568" }}>
                   Henüz firma yok. Kampanya başlatarak başlayın.
                 </td>
               </tr>
@@ -75,6 +75,9 @@ export default function FirmsTable({ firms }: { firms: FirmWithCampaign[] }) {
                     ) : (
                       <span className="text-xs" style={{ color: "#4a5568" }}>Hazırlanıyor…</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-xs" style={{ color: "#94a3b8" }}>
+                    👁 {firm.viewCount}
                   </td>
                   <td className="px-4 py-3 text-xs" style={{ color: "#64748b" }}>
                     {timeAgo(firm.createdAt)}

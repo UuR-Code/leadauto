@@ -10,6 +10,7 @@ const navItems = [
   { href: "/firms", label: "Firmalar", icon: "🏢" },
   { href: "/sites", label: "Demo Siteler", icon: "🌐" },
   { href: "/leads", label: "Yanıt Verenler", icon: "💬", badge: true },
+  { href: "/suppressions", label: "Engelliler", icon: "🚫" },
 ]
 
 export default function Sidebar() {
